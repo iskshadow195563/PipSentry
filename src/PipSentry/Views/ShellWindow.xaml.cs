@@ -131,7 +131,7 @@ public partial class ShellWindow : Window
     private void OnFpsChanged(object sender, RoutedEventArgs e)
     {
         if (MetaFps is null || Fps15 is null || Fps30 is null || Fps60 is null || Fps120 is null) return;
-        MetaFps.Text = $"{SelectedFps} FPS 目標";
+        MetaFps.Text = L.Format("MsgFpsTarget", SelectedFps);
     }
 
     private int SelectedFps =>
@@ -193,7 +193,7 @@ public partial class ShellWindow : Window
     private void OnRefresh(object sender, RoutedEventArgs e)
     {
         RefreshSources();
-        ShowToast("已重新整理視窗清單");
+        ShowToast(L.Get("MsgRefreshed"));
     }
 
     private void OnSourceSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -214,19 +214,19 @@ public partial class ShellWindow : Window
 
         SelectedTitle.Text = info.Title;
         SelectedMeta.Text = info.IsDisplay
-            ? $"桌面擷取 · 螢幕 {info.DisplayIndex} · {info.Width} × {info.Height}"
+            ? L.Format("MsgDisplayLine", info.DisplayIndex, info.Width, info.Height)
             : $"{info.ProcessName} · PID {info.ProcessId} · {info.Width} × {info.Height}";
         MetaTitle.Text = info.Title;
         MetaResolution.Text = $"{info.Width} × {info.Height}";
-        MetaFps.Text = $"{SelectedFps} FPS 目標";
+        MetaFps.Text = L.Format("MsgFpsTarget", SelectedFps);
         MetaMode.Text = "Windows Graphics Capture";
         MetaHintText.Text = info.IsMinimized
-            ? "此視窗目前最小化，擷取會是黑畫面，請先還原視窗。"
-            : "遊戲請使用「無邊框視窗」模式，獨佔全螢幕無法擷取。";
+            ? L.Get("TipMinimized")
+            : L.Get("TipBody");
 
         RegionButton.IsEnabled = true;
         StartButton.IsEnabled = true;
-        StatusLine.Text = info.IsMinimized ? "此視窗目前最小化，擷取可能為黑畫面" : "準備中就緒";
+        StatusLine.Text = info.IsMinimized ? L.Get("MsgMinimizedWarn") : L.Get("MsgPreparing");
 
         StartPreview();
     }
@@ -247,7 +247,7 @@ public partial class ShellWindow : Window
         }
         catch (Exception ex)
         {
-            StatusLine.Text = "預覽失敗：" + ex.Message;
+            StatusLine.Text = L.Get("MsgPreviewFailed") + ex.Message;
         }
     }
 
@@ -275,11 +275,11 @@ public partial class ShellWindow : Window
         switch (state)
         {
             case CaptureState.Running:
-                StatusLine.Text = message ?? "預覽中";
+                StatusLine.Text = message ?? L.Get("Previewing");
                 break;
             case CaptureState.Error:
             case CaptureState.SourceClosed:
-                StatusLine.Text = message ?? "擷取失敗";
+                StatusLine.Text = message ?? L.Get("CaptureFailed");
                 PreviewBadge.Visibility = Visibility.Collapsed;
                 break;
             case CaptureState.Idle:
@@ -311,16 +311,16 @@ public partial class ShellWindow : Window
     {
         if (_selected is null)
         {
-            ShowToast("請先選擇要監控的視窗");
+            ShowToast(L.Get("MsgPickFirst"));
             return;
         }
 
-        StatusLine.Text = "正在取得目前畫面…";
+        StatusLine.Text = L.Get("MsgGrabbing");
         var snapshot = await SnapshotService.GrabAsync(_selected);
         if (snapshot is null)
         {
-            StatusLine.Text = "無法取得畫面，請確認視窗未被最小化";
-            ShowToast("無法取得畫面快照");
+            StatusLine.Text = L.Get("MsgSnapshotFailed2");
+            ShowToast(L.Get("MsgSnapshotFailed"));
             return;
         }
 
@@ -334,11 +334,11 @@ public partial class ShellWindow : Window
             ModeRegion.IsChecked = true;
             UpdateRegionUi();
             StartPreview();
-            ShowToast($"已設定監控區域 {region.Width} × {region.Height}");
+            ShowToast(L.Format("MsgRegionSet", region.Width, region.Height));
         }
         else
         {
-            StatusLine.Text = "已取消框選";
+            StatusLine.Text = L.Get("MsgRegionCancel");
         }
     }
 
@@ -348,7 +348,7 @@ public partial class ShellWindow : Window
         RegionButton.IsEnabled = enabled && _selected is not null;
         RegionLabel.Text = _pendingRegion is { IsEmpty: false } region
             ? $"{region.X}, {region.Y} · {region.Width} × {region.Height}"
-            : enabled ? "尚未框選" : "整個視窗範圍";
+            : enabled ? L.Get("ScopeNone") : L.Get("ScopeFullValue");
     }
 
     private void OnOpacityChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -362,7 +362,7 @@ public partial class ShellWindow : Window
     {
         if (_selected is null)
         {
-            ShowToast("請先選擇要監控的視窗");
+            ShowToast(L.Get("MsgPickFirst"));
             return;
         }
 
@@ -403,11 +403,43 @@ public partial class ShellWindow : Window
 
     private void OnToggleTheme(object sender, RoutedEventArgs e) => App.ToggleTheme();
 
+    private void OnLanguageClick(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu();
+        foreach (var culture in Loc.Available)
+        {
+            var label = L.Get(Loc.KeyFor(culture));
+            var item = new MenuItem
+            {
+                Header = (Loc.Current == culture ? "✓  " : "     ") + label,
+            };
+            var code = culture;
+            item.Click += (_, _) => App.SetLanguage(code);
+            menu.Items.Add(item);
+        }
+
+        menu.PlacementTarget = LanguageButton;
+        menu.IsOpen = true;
+    }
+
+    public void RefreshLanguageUi()
+    {
+        if (_selected is { } info)
+        {
+            MetaResolution.Text = $"{info.Width} × {info.Height}";
+            MetaFps.Text = L.Format("MsgFpsTarget", SelectedFps);
+            MetaHintText.Text = info.IsMinimized ? L.Get("TipMinimized") : L.Get("TipBody");
+        }
+
+        RefreshSources(_selected?.Key);
+        UpdateRegionUi();
+    }
+
     public void RefreshThemeIcon()
     {
         if (ThemeButton is null) return;
         ThemeButton.Tag = (Geometry)FindResource(ThemeManager.IsDark ? "IcoSun" : "IcoMoon");
-        ThemeButton.ToolTip = ThemeManager.IsDark ? "切換淺色模式" : "切換深色模式";
+        ThemeButton.ToolTip = ThemeManager.IsDark ? L.Get("ThemeTipLight") : L.Get("ThemeTipDark");
     }
 
     public void ApplyChromeForTheme() => WindowEffects.ApplyDarkChrome(this, ThemeManager.IsDark);

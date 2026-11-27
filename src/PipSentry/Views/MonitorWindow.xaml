@@ -35,7 +35,7 @@
       <StackPanel Orientation="Horizontal">
         <Path x:Name="StatusIcon" Data="{StaticResource IcoPause}" Stroke="{DynamicResource Warn}"
               StrokeThickness="1.4" Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center" />
-        <TextBlock x:Name="StatusText" Text="已暫停" FontSize="11.5" Foreground="{DynamicResource Text1}"
+        <TextBlock x:Name="StatusText" Text="{DynamicResource Paused}" FontSize="11.5" Foreground="{DynamicResource Text1}"
                    Margin="8,0,0,0" VerticalAlignment="Center" />
       </StackPanel>
     </Border>
@@ -51,12 +51,12 @@
         </Grid.ColumnDefinitions>
 
         <Border Width="22" Height="22" CornerRadius="6" Background="#14FFFFFF" Cursor="SizeAll"
-                MouseLeftButtonDown="OnDragHandle" ToolTip="拖曳移動">
+                MouseLeftButtonDown="OnDragHandle" ToolTip="{DynamicResource TooltipDrag}">
           <Path Data="{StaticResource IcoGrip}" Stroke="{DynamicResource Text2}" StrokeThickness="1.2"
                 Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Border>
 
-        <TextBlock x:Name="TitleText" Grid.Column="1" Text="監控中" Margin="8,0" VerticalAlignment="Center"
+        <TextBlock x:Name="TitleText" Grid.Column="1" Text="{DynamicResource MonitorTitle}" Margin="8,0" VerticalAlignment="Center"
                    FontSize="11" Foreground="{DynamicResource Text1}" TextTrimming="CharacterEllipsis"
                    TextWrapping="NoWrap" />
 
@@ -66,17 +66,17 @@
             <TextBlock x:Name="FpsText" Text="0 FPS" FontSize="9.5" Foreground="{DynamicResource Accent}" />
           </Border>
           <Button x:Name="PauseButton" Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoPause}"
-                  Click="OnTogglePause" ToolTip="暫停 / 繼續 (Ctrl+Alt+P)" />
+                  Click="OnTogglePause" ToolTip="{DynamicResource TooltipPause}" />
           <Button Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoCrop}" Click="OnRedrawRegion"
-                  ToolTip="重新框選區域" />
+                  ToolTip="{DynamicResource TooltipRegion}" />
           <Button Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoCamera}" Click="OnScreenshot"
-                  ToolTip="儲存截圖 (Ctrl+Alt+S)" />
+                  ToolTip="{DynamicResource TooltipShot}" />
           <Button Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoPin}" Click="OnToggleTopmost"
-                  ToolTip="切換置頂" />
+                  ToolTip="{DynamicResource TooltipTopmost}" />
           <Button Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoBack}" Click="OnBackToSettings"
-                  ToolTip="回到設定 (Ctrl+Alt+R)" />
+                  ToolTip="{DynamicResource TooltipBack}" />
           <Button Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoClose}" Click="OnCloseMonitor"
-                  ToolTip="關閉監控" />
+                  ToolTip="{DynamicResource TooltipClose}" />
         </StackPanel>
       </Grid>
     </Border>
@@ -96,7 +96,7 @@
     <Border x:Name="ThroughBadge" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10"
             Background="#CC2B1A0E" CornerRadius="6" Padding="8,4" Visibility="Collapsed"
             IsHitTestVisible="False">
-      <TextBlock Text="點擊穿透中 · Ctrl+Alt+T 取消" FontSize="9.5" Foreground="{DynamicResource Warn}" />
+      <TextBlock Text="{DynamicResource ThroughBadge}" FontSize="9.5" Foreground="{DynamicResource Warn}" />
     </Border>
   </Grid>
 </Window>

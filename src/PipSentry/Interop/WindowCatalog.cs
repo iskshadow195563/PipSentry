@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using PipSentry.Platform;
 
 namespace PipSentry.Interop;
 
@@ -100,9 +101,9 @@ public static class WindowCatalog
                 Monitor = monitor,
                 IsDisplay = true,
                 DisplayIndex = index,
-                Title = $"螢幕 {index}",
+                Title = L.Format("MsgScreen", index),
                 ClassName = "Display",
-                ProcessName = "桌面擷取",
+                ProcessName = L.Get("MsgDesktopCapture"),
                 Width = bounds.Width,
                 Height = bounds.Height,
                 Icon = null,

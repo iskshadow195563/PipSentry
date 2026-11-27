@@ -20,6 +20,7 @@ public sealed class AppSettings
     public int RegionSourceHeight { get; set; }
 
     public string Theme { get; set; } = "Dark";
+    public string Language { get; set; } = string.Empty;
     public int Fps { get; set; } = 30;
     public string ScaleMode { get; set; } = "Fit";
     public double MonitorOpacity { get; set; } = 1.0;

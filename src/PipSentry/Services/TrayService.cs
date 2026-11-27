@@ -1,7 +1,7 @@
 using System;
 using System.Drawing;
-using System.IO;
 using System.Windows;
+using PipSentry.Platform;
 using Forms = System.Windows.Forms;
 
 namespace PipSentry.Services;
@@ -9,7 +9,11 @@ namespace PipSentry.Services;
 public sealed class TrayService : IDisposable
 {
     private readonly Forms.NotifyIcon _icon;
+    private readonly Forms.ToolStripMenuItem _openItem;
+    private readonly Forms.ToolStripMenuItem _monitorItem;
     private readonly Forms.ToolStripMenuItem _pauseItem;
+    private readonly Forms.ToolStripMenuItem _exitItem;
+    private bool _paused;
     private bool _disposed;
 
     public event Action? ShowShellRequested;
@@ -21,36 +25,49 @@ public sealed class TrayService : IDisposable
     {
         _icon = new Forms.NotifyIcon
         {
-            Text = "PipSentry 視窗監控",
+            Text = L.Get("TrayTip"),
             Icon = LoadIcon(),
             Visible = true,
             ContextMenuStrip = new Forms.ContextMenuStrip(),
         };
 
         var menu = _icon.ContextMenuStrip!;
-        var open = new Forms.ToolStripMenuItem("開啟主視窗");
-        open.Click += (_, _) => ShowShellRequested?.Invoke();
+        _openItem = new Forms.ToolStripMenuItem(L.Get("TrayOpen"));
+        _openItem.Click += (_, _) => ShowShellRequested?.Invoke();
 
-        var monitor = new Forms.ToolStripMenuItem("顯示監控視窗");
-        monitor.Click += (_, _) => ShowMonitorRequested?.Invoke();
+        _monitorItem = new Forms.ToolStripMenuItem(L.Get("TrayShowMonitor"));
+        _monitorItem.Click += (_, _) => ShowMonitorRequested?.Invoke();
 
-        _pauseItem = new Forms.ToolStripMenuItem("暫停擷取");
+        _pauseItem = new Forms.ToolStripMenuItem(L.Get("MenuPause"));
         _pauseItem.Click += (_, _) => PauseToggleRequested?.Invoke();
 
-        var exit = new Forms.ToolStripMenuItem("結束 PipSentry");
-        exit.Click += (_, _) => ExitRequested?.Invoke();
+        _exitItem = new Forms.ToolStripMenuItem(L.Get("TrayExit"));
+        _exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
-        menu.Items.Add(open);
-        menu.Items.Add(monitor);
+        menu.Items.Add(_openItem);
+        menu.Items.Add(_monitorItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_pauseItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add(exit);
+        menu.Items.Add(_exitItem);
 
         _icon.DoubleClick += (_, _) => ShowShellRequested?.Invoke();
     }
 
-    public void SetPaused(bool paused) => _pauseItem.Text = paused ? "繼續擷取" : "暫停擷取";
+    public void SetPaused(bool paused)
+    {
+        _paused = paused;
+        _pauseItem.Text = L.Get(paused ? "MenuResume" : "MenuPause");
+    }
+
+    public void RefreshTexts()
+    {
+        _icon.Text = L.Get("TrayTip");
+        _openItem.Text = L.Get("TrayOpen");
+        _monitorItem.Text = L.Get("TrayShowMonitor");
+        _exitItem.Text = L.Get("TrayExit");
+        _pauseItem.Text = L.Get(_paused ? "MenuResume" : "MenuPause");
+    }
 
     public void Notify(string title, string message)
     {

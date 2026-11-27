@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Media;
+using PipSentry.Platform;
 
 namespace PipSentry.Interop;
 
@@ -22,8 +23,8 @@ public sealed class WindowInfo
     public string Key => IsDisplay ? $"display:{Monitor}" : $"window:{Handle}";
 
     public string Subtitle => IsDisplay
-        ? $"螢幕 {DisplayIndex} · {Width} × {Height}"
+        ? L.Format("MsgScreen", DisplayIndex) + $" · {Width} × {Height}"
         : $"{ProcessName} · {Width} × {Height}";
 
-    public string Badge => IsMinimized ? "最小化" : IsDisplay ? "桌面" : string.Empty;
+    public string Badge => IsMinimized ? L.Get("BadgeMinimized") : IsDisplay ? L.Get("BadgeDesktop") : string.Empty;
 }

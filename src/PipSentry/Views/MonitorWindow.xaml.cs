@@ -178,10 +178,10 @@ public partial class MonitorWindow : Window
         switch (state)
         {
             case CaptureState.Error:
-                ShowStatus("擷取失敗", message ?? "未知錯誤", Native.DWMWCP_DEFAULT);
+                ShowStatus(L.Get("CaptureFailed"), message ?? L.Get("MsgUnknownError"), Native.DWMWCP_DEFAULT);
                 break;
             case CaptureState.SourceClosed:
-                ShowStatus("來源視窗已關閉", "請回到設定重新選擇視窗", Native.DWMWCP_DEFAULT);
+                ShowStatus(L.Get("SourceClosed"), L.Get("SourceClosedHint"), Native.DWMWCP_DEFAULT);
                 break;
             case CaptureState.Running:
                 StatusOverlay.Visibility = _paused ? Visibility.Visible : Visibility.Collapsed;
@@ -191,7 +191,7 @@ public partial class MonitorWindow : Window
                 }
                 break;
             case CaptureState.Paused:
-                ShowStatus("已暫停", "按 Ctrl+Alt+P 或工具列按鈕繼續", Native.DWMWCP_DEFAULT);
+                ShowStatus(L.Get("Paused"), L.Get("PausedHint"), Native.DWMWCP_DEFAULT);
                 break;
             case CaptureState.Idle:
                 StatusOverlay.Visibility = Visibility.Collapsed;
@@ -218,9 +218,9 @@ public partial class MonitorWindow : Window
         _lastStats = now;
 
         FpsText.Text = $"{fps} FPS";
-        var compatibility = _controller?.CompatibilityMode == true ? " · 相容模式" : string.Empty;
+        var compatibility = _controller?.CompatibilityMode == true ? " · " + L.Get("CompatMode") : string.Empty;
         StatsText.Text = _bitmap is null
-            ? $"等待畫面{compatibility}"
+            ? L.Get("WaitingFrame") + compatibility
             : $"{_bitmap.PixelWidth} × {_bitmap.PixelHeight}{compatibility}";
     }
 
@@ -265,7 +265,7 @@ public partial class MonitorWindow : Window
         SetClickThrough(!_clickThrough);
         App.Settings.ClickThrough = _clickThrough;
         SettingsStore.Save(App.Settings);
-        App.Toast(_clickThrough ? "已開啟點擊穿透（Ctrl+Alt+T 取消）" : "已關閉點擊穿透");
+        App.Toast(_clickThrough ? L.Get("MsgClickThroughOn") : L.Get("MsgClickThroughOff"));
     }
 
     private void SetClickThrough(bool enabled)
@@ -287,7 +287,7 @@ public partial class MonitorWindow : Window
         {
             _controller?.Pause();
             PauseButton.Tag = (Geometry)FindResource("IcoPlay");
-            ShowStatus("已暫停", "按 Ctrl+Alt+P 或工具列按鈕繼續", Native.DWMWCP_DEFAULT);
+            ShowStatus(L.Get("Paused"), L.Get("PausedHint"), Native.DWMWCP_DEFAULT);
         }
         else
         {
@@ -309,7 +309,7 @@ public partial class MonitorWindow : Window
             var snapshot = await SnapshotService.GrabAsync(_source);
             if (snapshot is null)
             {
-                App.Toast("無法取得目前畫面");
+                App.Toast(L.Get("MsgNoFrame"));
                 return;
             }
 
@@ -320,11 +320,11 @@ public partial class MonitorWindow : Window
             var encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(snapshot));
             using (var stream = File.Create(path)) encoder.Save(stream);
-            App.Toast("已儲存截圖：" + Path.GetFileName(path));
+            App.Toast(L.Get("MsgShotSaved") + Path.GetFileName(path));
         }
         catch (Exception ex)
         {
-            App.Toast("截圖失敗：" + ex.Message);
+            App.Toast(L.Get("MsgShotFailed") + ex.Message);
         }
     }
 
@@ -346,7 +346,7 @@ public partial class MonitorWindow : Window
         var snapshot = await SnapshotService.GrabAsync(_source);
         if (snapshot is null)
         {
-            App.Toast("無法取得畫面快照");
+            App.Toast(L.Get("MsgSnapshotFailed"));
             return;
         }
 
@@ -360,7 +360,7 @@ public partial class MonitorWindow : Window
             SettingsStore.Save(App.Settings);
             _controller?.SetRegion(region);
             if (App.Shell is not null) App.Shell.RefreshFromSettings();
-            App.Toast($"已套用區域 {region.Width} × {region.Height}");
+            App.Toast(L.Format("MsgRegionApplied", region.Width, region.Height));
         }
     }
 
@@ -376,8 +376,8 @@ public partial class MonitorWindow : Window
             menu.Items.Add(item);
         }
 
-        Add(_paused ? "繼續擷取" : "暫停擷取", TogglePause);
-        Add("儲存截圖", async () =>
+        Add(_paused ? L.Get("MenuResume") : L.Get("MenuPause"), TogglePause);
+        Add(L.Get("MenuScreenshot"), async () =>
         {
             if (_source is null) return;
             var snapshot = await SnapshotService.GrabAsync(_source);
@@ -390,24 +390,24 @@ public partial class MonitorWindow : Window
             using (var stream = File.Create(path)) encoder.Save(stream);
         });
         menu.Items.Add(new System.Windows.Controls.Separator());
-        Add(Topmost ? "取消置頂" : "保持置頂", () => OnToggleTopmost(this, new RoutedEventArgs()));
-        Add(_clickThrough ? "取消點擊穿透" : "點擊穿透", () => SetClickThrough(!_clickThrough));
-        Add(App.Settings.CaptureCursor ? "隱藏滑鼠指標" : "顯示滑鼠指標", ToggleCursorCapture);
+        Add(Topmost ? L.Get("MenuTopmostOff") : L.Get("MenuTopmostOn"), () => OnToggleTopmost(this, new RoutedEventArgs()));
+        Add(_clickThrough ? L.Get("MenuClickThroughOff") : L.Get("MenuClickThrough"), () => SetClickThrough(!_clickThrough));
+        Add(App.Settings.CaptureCursor ? L.Get("MenuHideCursor") : L.Get("MenuShowCursor"), ToggleCursorCapture);
         menu.Items.Add(new System.Windows.Controls.Separator());
-        Add("完整顯示", () => ApplyScaleMode("Fit"));
-        Add("裁切填滿", () => ApplyScaleMode("Fill"));
-        Add("拉伸", () => ApplyScaleMode("Stretch"));
+        Add(L.Get("ScaleFit"), () => ApplyScaleMode("Fit"));
+        Add(L.Get("ScaleFill"), () => ApplyScaleMode("Fill"));
+        Add(L.Get("ScaleStretch"), () => ApplyScaleMode("Stretch"));
         menu.Items.Add(new System.Windows.Controls.Separator());
-        Add("貼齊左上", () => SnapToCorner("TL"));
-        Add("貼齊右上", () => SnapToCorner("TR"));
-        Add("貼齊左下", () => SnapToCorner("BL"));
-        Add("貼齊右下", () => SnapToCorner("BR"));
-        Add("置中", () => SnapToCorner("C"));
+        Add(L.Get("SnapTL"), () => SnapToCorner("TL"));
+        Add(L.Get("SnapTR"), () => SnapToCorner("TR"));
+        Add(L.Get("SnapBL"), () => SnapToCorner("BL"));
+        Add(L.Get("SnapBR"), () => SnapToCorner("BR"));
+        Add(L.Get("Center"), () => SnapToCorner("C"));
         menu.Items.Add(new System.Windows.Controls.Separator());
-        Add("大小 100%", () => ApplySizePreset(1.0));
-        Add("大小 50%", () => ApplySizePreset(0.5));
-        Add("大小 25%", () => ApplySizePreset(0.25));
-        Add("鋪滿螢幕", () =>
+        Add(L.Get("Size100"), () => ApplySizePreset(1.0));
+        Add(L.Get("Size50"), () => ApplySizePreset(0.5));
+        Add(L.Get("Size25"), () => ApplySizePreset(0.25));
+        Add(L.Get("CoverScreen"), () =>
         {
             var work = GetWorkAreaDip();
             Left = work.Left;
@@ -416,8 +416,8 @@ public partial class MonitorWindow : Window
             Height = work.Height;
         });
         menu.Items.Add(new System.Windows.Controls.Separator());
-        Add("回到設定", () => App.ShowShell());
-        Add("關閉監控", () => App.CloseMonitor());
+        Add(L.Get("BackToSettings"), () => App.ShowShell());
+        Add(L.Get("CloseMonitor"), () => App.CloseMonitor());
         menu.PlacementTarget = this;
         menu.IsOpen = true;
         e.Handled = true;
@@ -479,7 +479,7 @@ public partial class MonitorWindow : Window
         App.Settings.CaptureCursor = !App.Settings.CaptureCursor;
         _controller?.SetCaptureCursor(App.Settings.CaptureCursor);
         SettingsStore.Save(App.Settings);
-        App.Toast(App.Settings.CaptureCursor ? "已顯示滑鼠指標" : "已隱藏滑鼠指標");
+        App.Toast(App.Settings.CaptureCursor ? L.Get("MsgCursorOn") : L.Get("MsgCursorOff"));
     }
 
     // ---------------------------------------------------------------- sizing

@@ -1,0 +1,9 @@
+feat(i18n): add zh-Hant / zh-Hans / en-US localization
+
+- Localization dictionaries (134 keys) under src/PipSentry/Localization
+- Runtime language switching via header globe button; persisted in settings
+- First launch follows the system UI language
+- All shell/monitor/region/tray strings moved to DynamicResource + L.Get/L.Format
+- Layout widened for English labels; tray menu texts refresh on switch
+- Add --render dev switch for privacy-safe screenshots
+- Bump version to 1.1.0

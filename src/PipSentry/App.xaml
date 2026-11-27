@@ -7,6 +7,7 @@
       <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="Themes/Tokens.xaml" />
         <ResourceDictionary Source="Themes/Dark.xaml" />
+        <ResourceDictionary Source="Localization/Lang.zh-Hant.xaml" />
         <ResourceDictionary Source="Themes/Controls.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>

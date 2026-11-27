@@ -33,6 +33,19 @@ public partial class App : Application
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+        // Headless UI render: PipSentry.exe --render <png> [--lang zh-Hant|zh-Hans|en-US] [--theme Dark|Light]
+        var renderPath = GetArg(e.Args, "--render");
+        if (!string.IsNullOrWhiteSpace(renderPath))
+        {
+            Settings = SettingsStore.Load();
+            Settings.Language = GetArg(e.Args, "--lang") ?? (string.IsNullOrWhiteSpace(Settings.Language) ? Loc.DetectSystem() : Settings.Language);
+            Loc.Apply(Settings.Language);
+            ThemeManager.Apply(GetArg(e.Args, "--theme") ?? Settings.Theme);
+            RenderShell(renderPath!);
+            Current.Shutdown();
+            return;
+        }
+
         _instanceMutex = new Mutex(true, @"Global\PipSentry.SingleInstance", out var created);
         if (!created)
         {
@@ -41,6 +54,8 @@ public partial class App : Application
         }
 
         Settings = SettingsStore.Load();
+        if (string.IsNullOrWhiteSpace(Settings.Language)) Settings.Language = Loc.DetectSystem();
+        Loc.Apply(Settings.Language);
         ThemeManager.Apply(Settings.Theme);
         KeepAliveService.OptOutOfPowerThrottling();
         AppLog.Write("startup");
@@ -56,7 +71,7 @@ public partial class App : Application
                 return;
             }
 
-            Toast("發生未預期的錯誤：" + args.Exception.Message);
+            Toast(L.Get("MsgUnexpected") + args.Exception.Message);
             args.Handled = true;
         };
 
@@ -165,6 +180,46 @@ public partial class App : Application
         Shell?.ShowToast(message);
         Tray?.Notify("PipSentry", message);
         AppLog.Write("toast: " + message);
+    }
+
+    private static string? GetArg(string[] args, string name)
+    {
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (string.Equals(args[i], name, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
+        }
+
+        return null;
+    }
+
+    private static void RenderShell(string path)
+    {
+        var window = new ShellWindow { Width = 1148, Height = 866 };
+        var content = (FrameworkElement)window.Content;
+        content.Measure(new Size(1148, 866));
+        content.Arrange(new Rect(0, 0, 1148, 866));
+        content.UpdateLayout();
+
+        const double dpi = 1.5;
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
+            (int)(1148 * dpi), (int)(866 * dpi), 96 * dpi, 96 * dpi,
+            System.Windows.Media.PixelFormats.Pbgra32);
+        bitmap.Render(content);
+
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var stream = System.IO.File.Create(path);
+        encoder.Save(stream);
+        AppLog.Write("rendered shell: " + path);
+    }
+
+    public static void SetLanguage(string culture)
+    {
+        Settings.Language = culture;
+        Loc.Apply(culture);
+        SettingsStore.Save(Settings);
+        Shell?.RefreshLanguageUi();
+        Tray?.RefreshTexts();
     }
 
     public static void ToggleTheme()

@@ -182,7 +182,7 @@
               <Path Data="{StaticResource IcoSearch}" Stroke="{DynamicResource Text3}" StrokeThickness="1.4"
                     StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="13" Height="13"
                     HorizontalAlignment="Left" VerticalAlignment="Center" Margin="11,0,0,0" Stretch="Uniform" />
-              <TextBlock x:Name="ph" Text="搜尋視窗…" Foreground="{DynamicResource Text3}"
+              <TextBlock x:Name="ph" Text="{DynamicResource SearchPlaceholder}" Foreground="{DynamicResource Text3}"
                          FontFamily="{StaticResource UiFont}" FontSize="12.5"
                          VerticalAlignment="Center" Margin="30,0,0,0" IsHitTestVisible="False" />
               <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"

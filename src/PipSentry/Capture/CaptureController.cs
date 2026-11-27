@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using PipSentry.Interop;
+using PipSentry.Platform;
 
 namespace PipSentry.Capture;
 
@@ -56,7 +57,7 @@ public sealed class CaptureController : IDisposable
             AttachFallback(source, region, fps);
         }
 
-        SetState(CaptureState.Running, CompatibilityMode ? "相容模式（GDI 擷取）" : null);
+        SetState(CaptureState.Running, CompatibilityMode ? L.Get("CompatLabel") : null);
     }
 
     private void AttachFallback(WindowInfo source, PixelRect? region, int fps)
@@ -138,7 +139,7 @@ public sealed class CaptureController : IDisposable
                     if (source is null) return;
                     previous?.Dispose();
                     AttachFallback(source, null, 30);
-                    SetState(CaptureState.Running, "已切換至相容模式（GDI 擷取）");
+                    SetState(CaptureState.Running, L.Get("MsgCompatFallback"));
                 }
                 catch (Exception ex)
                 {
@@ -154,7 +155,7 @@ public sealed class CaptureController : IDisposable
     private void OnSourceClosed()
     {
         if (_disposed) return;
-        _dispatcher.BeginInvoke(new Action(() => SetState(CaptureState.SourceClosed, "來源視窗已關閉")));
+        _dispatcher.BeginInvoke(new Action(() => SetState(CaptureState.SourceClosed, L.Get("SourceClosed"))));
     }
 
     public void Pause()
