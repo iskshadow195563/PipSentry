@@ -5,9 +5,7 @@ namespace PipSentry.Interop;
 
 public static class RegionMath
 {
-    /// <summary>
-    /// Rescales a pixel region when the source surface changes size (e.g. game switches resolution).
-    /// </summary>
+    /// <summary>Rescales a region when the source changes size.</summary>
     public static PixelRect Scale(PixelRect region, int fromWidth, int fromHeight, int toWidth, int toHeight)
     {
         if (region.IsEmpty || fromWidth <= 0 || fromHeight <= 0 || toWidth <= 0 || toHeight <= 0)

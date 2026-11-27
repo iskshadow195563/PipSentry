@@ -81,12 +81,10 @@ public sealed class WgcCaptureEngine : ICaptureEngine
         _session = _pool.CreateCaptureSession(_item);
         try
         {
-            // Windows 11 20348+: hide the yellow capture border around the source window.
             _session.IsBorderRequired = false;
         }
         catch
         {
-            // Older builds keep the border; capture still works.
         }
 
         SetCaptureCursor(_captureCursor);

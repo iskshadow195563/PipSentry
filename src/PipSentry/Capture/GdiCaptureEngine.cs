@@ -7,7 +7,7 @@ using PipSentry.Platform;
 
 namespace PipSentry.Capture;
 
-/// <summary>Compatibility backend used when Windows.Graphics.Capture is unavailable for a target.</summary>
+/// <summary>Fallback when WGC is unavailable.</summary>
 public sealed class GdiCaptureEngine : ICaptureEngine
 {
     private readonly BufferPool _buffers = new();

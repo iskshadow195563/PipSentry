@@ -445,10 +445,7 @@ public partial class ShellWindow : Window
 
     public void ApplyChromeForTheme() => WindowEffects.ApplyDarkChrome(this, ThemeManager.IsDark);
 
-    /// <summary>
-    /// Cross-fades the whole window while the palette is swapped, so switching
-    /// themes looks like a dissolve instead of a hard cut.
-    /// </summary>
+    /// <summary>Swaps the palette behind a fading snapshot instead of a hard cut.</summary>
     public void RunThemeTransition(Action apply)
     {
         try

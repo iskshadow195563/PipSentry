@@ -2,7 +2,7 @@ using System;
 
 namespace PipSentry.Capture;
 
-/// <summary>A BGRA32 frame whose buffer is rented from the engine pool. The consumer must call Release once done.</summary>
+/// <summary>BGRA32 frame lent from the engine pool. Caller must call Release.</summary>
 public sealed class CapturedFrame
 {
     private Action<byte[]>? _release;
