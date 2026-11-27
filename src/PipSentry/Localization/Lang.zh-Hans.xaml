@@ -23,7 +23,6 @@
   <sys:String x:Key="TipBody">游戏请使用「无边框窗口」模式，独占全屏无法采集。</sys:String>
   <sys:String x:Key="TipMinimized">此窗口当前最小化，采集会是黑画面，请先还原窗口。</sys:String>
   <sys:String x:Key="PreviewEmpty">选择窗口后即时预览</sys:String>
-  <sys:String x:Key="Live">LIVE</sys:String>
   <sys:String x:Key="Scope">监控范围</sys:String>
   <sys:String x:Key="ScopeFull">整个窗口</sys:String>
   <sys:String x:Key="ScopeRegion">自定义区域</sys:String>

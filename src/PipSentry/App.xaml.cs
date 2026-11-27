@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Windows.Input;
 using PipSentry.Capture;
@@ -35,6 +36,18 @@ public partial class App : Application
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+        // Single frame dump: PipSentry.exe --grab <png> [--scale WxH] [--region x,y,w,h]
+        var grabPath = GetArg(e.Args, "--grab");
+        if (!string.IsNullOrWhiteSpace(grabPath))
+        {
+            Settings = SettingsStore.Load();
+            Loc.Apply(Settings.Language);
+            ThemeManager.Apply(Settings.Theme);
+            GrabFrame(grabPath!, GetArg(e.Args, "--scale"), GetArg(e.Args, "--region"));
+            Current.Shutdown();
+            return;
+        }
+
         // Capture benchmark: PipSentry.exe --bench <report.txt> [--fps 60] [--region x,y,w,h]
         var benchPath = GetArg(e.Args, "--bench");
         if (!string.IsNullOrWhiteSpace(benchPath))
@@ -42,7 +55,8 @@ public partial class App : Application
             Settings = SettingsStore.Load();
             Loc.Apply(Settings.Language);
             ThemeManager.Apply(Settings.Theme);
-            RunBench(benchPath!, GetArg(e.Args, "--fps"), GetArg(e.Args, "--region"));
+            RunBench(benchPath!, GetArg(e.Args, "--fps"), GetArg(e.Args, "--region"),
+                GetArg(e.Args, "--scale"), e.Args.Contains("--paused"), GetArg(e.Args, "--seconds"));
             Current.Shutdown();
             return;
         }
@@ -206,9 +220,60 @@ public partial class App : Application
         return null;
     }
 
-    private static void RunBench(string outputPath, string? fpsArg, string? regionArg)
+    private static void GrabFrame(string outputPath, string? scaleArg, string? regionArg)
     {
-        const double seconds = 10;
+        var source = WindowCatalog.Enumerate().FirstOrDefault(w => w.IsDisplay);
+        if (source is null) return;
+
+        PixelRect? region = null;
+        if (!string.IsNullOrWhiteSpace(regionArg))
+        {
+            var parts = regionArg.Split(',', 'x');
+            if (parts.Length == 4 && int.TryParse(parts[0], out var rx) && int.TryParse(parts[1], out var ry) &&
+                int.TryParse(parts[2], out var rw) && int.TryParse(parts[3], out var rh))
+            {
+                region = new PixelRect(rx, ry, rw, rh);
+            }
+        }
+
+        int scaleW = 0, scaleH = 0;
+        if (!string.IsNullOrWhiteSpace(scaleArg))
+        {
+            var parts = scaleArg.Split('x', 'X');
+            if (parts.Length == 2) { int.TryParse(parts[0], out scaleW); int.TryParse(parts[1], out scaleH); }
+        }
+
+        BitmapSource? saved = null;
+        var controller = new CaptureController(Current.Dispatcher);
+        controller.FrameReady += frame =>
+        {
+            if (saved is not null) return;
+            try { saved = FrameBitmap.Create(frame); } catch { }
+        };
+
+        controller.Start(source, region, 30);
+        if (scaleW > 0 && scaleH > 0) controller.SetOutputSize(scaleW, scaleH);
+
+        var pump = new DispatcherFrame();
+        var timer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background,
+            (_, _) => pump.Continue = false, Current.Dispatcher);
+        timer.Start();
+        Dispatcher.PushFrame(pump);
+        controller.Dispose();
+
+        if (saved is null) return;
+        var directory = System.IO.Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(directory)) System.IO.Directory.CreateDirectory(directory);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(saved));
+        using var stream = System.IO.File.Create(outputPath);
+        encoder.Save(stream);
+    }
+
+    private static void RunBench(string outputPath, string? fpsArg, string? regionArg, string? scaleArg, bool startPaused,
+        string? secondsArg)
+    {
+        var seconds = double.TryParse(secondsArg, out var parsedSeconds) && parsedSeconds >= 2 ? parsedSeconds : 10;
         var targetFps = int.TryParse(fpsArg, out var parsedFps) ? parsedFps : 60;
         PixelRect? region = null;
 
@@ -249,6 +314,17 @@ public partial class App : Application
 
         controller.Start(source, region, targetFps);
 
+        if (!string.IsNullOrWhiteSpace(scaleArg))
+        {
+            var parts = scaleArg.Split('x', 'X');
+            if (parts.Length == 2 && int.TryParse(parts[0], out var sw) && int.TryParse(parts[1], out var sh))
+            {
+                controller.SetOutputSize(sw, sh);
+            }
+        }
+
+        if (startPaused) controller.Pause();
+
         var pump = new DispatcherFrame();
         var timer = new DispatcherTimer(TimeSpan.FromSeconds(seconds), DispatcherPriority.Background,
             (_, _) => pump.Continue = false, Current.Dispatcher);
@@ -269,6 +345,8 @@ public partial class App : Application
         report.AppendLine($"pixel traffic : {bytes / 1024.0 / 1024.0 / elapsed:0.0} MB/s (frames copied to CPU)");
         report.AppendLine($"cpu           : {cpuUsed.TotalSeconds / elapsed * 100:0.0}% of one core, " +
                           $"{cpuUsed.TotalSeconds / elapsed * 100 / Environment.ProcessorCount:0.00}% of {Environment.ProcessorCount} cores");
+        report.AppendLine($"output cap    : {scaleArg ?? "native"}");
+        report.AppendLine($"paused        : {startPaused}");
         report.AppendLine($"working set   : {memoryBefore / 1024 / 1024} MB -> {memoryAfter / 1024 / 1024} MB");
 
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outputPath) ?? ".");

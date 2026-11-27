@@ -176,6 +176,8 @@ public sealed class CaptureController : IDisposable
 
     public void SetCaptureCursor(bool enabled) => _engine?.SetCaptureCursor(enabled);
 
+    public void SetOutputSize(int width, int height) => _engine?.SetOutputSize(width, height);
+
     public void Stop()
     {
         var engine = _engine;

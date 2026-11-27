@@ -43,6 +43,8 @@ public partial class MonitorWindow : Window
         MouseLeftButtonDown += (_, _) => { if (!_clickThrough) DragMove(); };
         Closed += OnClosedInternal;
         Loaded += (_, _) => ShowToolbar(false);
+        SizeChanged += (_, _) => UpdateOutputSize();
+        IsVisibleChanged += OnVisibilityChanged;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -120,10 +122,37 @@ public partial class MonitorWindow : Window
         _controller.SourceSizeChanged += OnSourceSize;
         _controller.Start(_source, _region, settings.Fps);
         _controller.SetCaptureCursor(settings.CaptureCursor);
+        UpdateOutputSize();
 
         _bitmap = null;
         VideoBrush.ImageSource = null;
         _statsTimer.Start();
+    }
+
+    /// <summary>Tells the engine what the video area can actually show, so it can downscale before readback.</summary>
+    private void UpdateOutputSize()
+    {
+        if (_controller is null) return;
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var width = (int)Math.Round(Root.ActualWidth * dpi.DpiScaleX);
+        var height = (int)Math.Round(Root.ActualHeight * dpi.DpiScaleY);
+        if (width < 8 || height < 8) return;
+        _controller.SetOutputSize(width, height);
+    }
+
+    private void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (IsVisible)
+        {
+            _statsTimer.Start();
+            _controller?.Resume();
+            UpdateOutputSize();
+        }
+        else
+        {
+            _statsTimer.Stop();
+            _controller?.Pause();
+        }
     }
 
     public void StopCapture()

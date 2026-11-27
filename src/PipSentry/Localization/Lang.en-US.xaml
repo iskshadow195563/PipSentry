@@ -23,7 +23,6 @@
   <sys:String x:Key="TipBody">Use borderless windowed mode — exclusive fullscreen cannot be captured.</sys:String>
   <sys:String x:Key="TipMinimized">This window is minimized; capture will be black until restored.</sys:String>
   <sys:String x:Key="PreviewEmpty">Select a window to preview</sys:String>
-  <sys:String x:Key="Live">LIVE</sys:String>
   <sys:String x:Key="Scope">Capture area</sys:String>
   <sys:String x:Key="ScopeFull">Full window</sys:String>
   <sys:String x:Key="ScopeRegion">Custom region</sys:String>

@@ -200,7 +200,7 @@
                           HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal">
                       <Ellipse Width="5" Height="5" Fill="{DynamicResource Live}" VerticalAlignment="Center" />
-                      <TextBlock Text="{DynamicResource Live}" FontSize="9" Foreground="{DynamicResource Text1}" Margin="5,0,0,0"
+                      <TextBlock Text="LIVE" FontSize="9" Foreground="{DynamicResource Text1}" Margin="5,0,0,0"
                                  FontWeight="SemiBold" />
                     </StackPanel>
                   </Border>

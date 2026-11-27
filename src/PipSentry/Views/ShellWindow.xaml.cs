@@ -50,6 +50,30 @@ public partial class ShellWindow : Window
 
         Loaded += OnLoaded;
         PreviewKeyDown += OnPreviewKeyDown;
+        SizeChanged += (_, _) => UpdatePreviewOutputSize();
+        IsVisibleChanged += OnShellVisibilityChanged;
+        StateChanged += OnShellStateChanged;
+    }
+
+    private void OnShellVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        {
+            _preview.Stop();
+            AppLog.Write("preview stop: shell hidden");
+        }
+    }
+
+    private void OnShellStateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            _preview.Stop();
+            AppLog.Write("preview stop: minimized");
+        }
+        else if (_preview.State == CaptureState.Idle && _selected is not null && IsVisible)
+        {
+            StartPreview();
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -243,13 +267,25 @@ public partial class ShellWindow : Window
 
         try
         {
-            _preview.Start(_selected, region, 20);
+            _preview.Start(_selected, region, 15);
+            UpdatePreviewOutputSize();
+            AppLog.Write($"preview start: {_selected.Title} @15fps");
             PreviewBadge.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
         {
             StatusLine.Text = L.Get("MsgPreviewFailed") + ex.Message;
         }
+    }
+
+    private void UpdatePreviewOutputSize()
+    {
+        var dpi = VisualTreeHelper.GetDpi(this);
+        var width = (int)Math.Round(PreviewSurface.ActualWidth * dpi.DpiScaleX);
+        var height = (int)Math.Round(PreviewSurface.ActualHeight * dpi.DpiScaleY);
+        if (width < 8 || height < 8) return;
+        _preview.SetOutputSize(width, height);
+        AppLog.Write($"preview output cap: {width}x{height}");
     }
 
     private void OnPreviewFrame(CapturedFrame frame)

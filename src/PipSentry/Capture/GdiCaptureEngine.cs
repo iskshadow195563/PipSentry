@@ -15,6 +15,8 @@ public sealed class GdiCaptureEngine : ICaptureEngine
     private Thread? _thread;
     private volatile bool _running;
     private volatile bool _paused;
+    private int _outputWidth;
+    private int _outputHeight;
     private volatile int _fps = 15;
     private PixelRect? _region;
     private WindowInfo? _source;
@@ -63,6 +65,12 @@ public sealed class GdiCaptureEngine : ICaptureEngine
 
     public void SetCaptureCursor(bool enabled)
     {
+    }
+
+    public void SetOutputSize(int width, int height)
+    {
+        _outputWidth = width;
+        _outputHeight = height;
     }
 
     private void Loop()

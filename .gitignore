@@ -14,6 +14,7 @@ packaging/.wix/
 
 # Scratch files
 .tmp/
+.perf/
 .commitmsg
 .release-notes.md
 .release/

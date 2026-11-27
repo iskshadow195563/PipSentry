@@ -47,7 +47,7 @@ Push-Location (Join-Path $root "packaging")
 try {
     & $Wix extension add "WixToolset.UI.wixext/5.0.2" | Out-Host
     & $Wix build -arch x64 -ext "WixToolset.UI.wixext/5.0.2" PipSentry.wxs `
-        -o (Join-Path $root "dist/PipSentry-1.1.1-x64.msi")
+        -o (Join-Path $root "dist/PipSentry-1.2.0-x64.msi")
     if ($LASTEXITCODE -ne 0) { throw "wix build failed" }
 }
 finally {

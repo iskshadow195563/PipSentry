@@ -25,6 +25,7 @@ public interface ICaptureEngine : IDisposable
     void SetFps(int fps);
     void SetPaused(bool paused);
     void SetCaptureCursor(bool enabled);
+    void SetOutputSize(int width, int height);
 }
 
 public sealed class WgcCaptureEngine : ICaptureEngine
@@ -45,6 +46,9 @@ public sealed class WgcCaptureEngine : ICaptureEngine
     private long _lastFrameTick;
     private bool _paused;
     private bool _captureCursor;
+    private int _outputWidth;
+    private int _outputHeight;
+    private GpuScaler? _scaler;
     private bool _disposed;
 
     public event Action<CapturedFrame>? FrameReady;
@@ -106,6 +110,13 @@ public sealed class WgcCaptureEngine : ICaptureEngine
 
     public void SetPaused(bool paused) => _paused = paused;
 
+    /// <summary>Caps the frame handed to the UI; 0 means native size.</summary>
+    public void SetOutputSize(int width, int height)
+    {
+        _outputWidth = width;
+        _outputHeight = height;
+    }
+
     public void SetCaptureCursor(bool enabled)
     {
         _captureCursor = enabled;
@@ -160,16 +171,34 @@ public sealed class WgcCaptureEngine : ICaptureEngine
         lock (_gate)
         {
             if (_disposed) return;
+
+            var (outWidth, outHeight) = FitOutput(region.Width, region.Height);
+            if (outWidth != region.Width || outHeight != region.Height)
+            {
+                _scaler ??= new GpuScaler(_d3d);
+                if (_scaler.Draw(texture, region, outWidth, outHeight))
+                {
+                    var scaledStride = outWidth * 4;
+                    var scaledBuffer = _buffers.Rent(scaledStride * outHeight);
+                    _scaler.CopyTo(scaledBuffer, outWidth, outHeight);
+                    FrameReady?.Invoke(new CapturedFrame(scaledBuffer, outWidth, outHeight, Stopwatch.GetTimestamp(), _buffers.Return));
+                    return;
+                }
+            }
+
             EnsureStaging(region.Width, region.Height);
             var context = _d3d.ImmediateContext;
             var sourceRegion = new ResourceRegion(region.X, region.Y, 0, region.Right, region.Bottom, 1);
             context.CopySubresourceRegion(texture, 0, sourceRegion, _staging, 0, 0, 0, 0);
 
             var mapped = context.MapSubresource(_staging, 0, MapMode.Read, SharpDX.Direct3D11.MapFlags.None);
-            var stride = region.Width * 4;
-            var buffer = _buffers.Rent(stride * region.Height);
+            outWidth = region.Width;
+            outHeight = region.Height;
+            byte[] buffer;
             try
             {
+                var stride = region.Width * 4;
+                buffer = _buffers.Rent(stride * region.Height);
                 for (var y = 0; y < region.Height; y++)
                 {
                     Marshal.Copy(mapped.DataPointer + (y * mapped.RowPitch), buffer, y * stride, stride);
@@ -180,7 +209,7 @@ public sealed class WgcCaptureEngine : ICaptureEngine
                 context.UnmapSubresource(_staging, 0);
             }
 
-            FrameReady?.Invoke(new CapturedFrame(buffer, region.Width, region.Height, Stopwatch.GetTimestamp(), _buffers.Return));
+            FrameReady?.Invoke(new CapturedFrame(buffer, outWidth, outHeight, Stopwatch.GetTimestamp(), _buffers.Return));
         }
 
         var content = frame.ContentSize;
@@ -225,6 +254,15 @@ public sealed class WgcCaptureEngine : ICaptureEngine
         });
     }
 
+    private (int Width, int Height) FitOutput(int sourceWidth, int sourceHeight)
+    {
+        if (_outputWidth <= 0 || _outputHeight <= 0) return (sourceWidth, sourceHeight);
+        if (sourceWidth <= _outputWidth && sourceHeight <= _outputHeight) return (sourceWidth, sourceHeight);
+
+        var scale = Math.Min((double)_outputWidth / sourceWidth, (double)_outputHeight / sourceHeight);
+        return (Math.Max(1, (int)Math.Round(sourceWidth * scale)), Math.Max(1, (int)Math.Round(sourceHeight * scale)));
+    }
+
     public void Dispose()
     {
         lock (_gate)
@@ -245,6 +283,8 @@ public sealed class WgcCaptureEngine : ICaptureEngine
                 _staging?.Dispose();
                 _staging = null;
             }
+            _scaler?.Dispose();
+            _scaler = null;
             _d3d?.Dispose();
             _d3d = null;
             _device = null;
