@@ -25,6 +25,7 @@ public partial class ShellWindow : Window
     private PixelRect? _pendingRegion;
     private bool _suppressUiEvents;
     private bool _applyingProfile;
+    private int _profileCursor = -1;
 
     public ShellWindow()
     {
@@ -449,6 +450,12 @@ public partial class ShellWindow : Window
 
     private void OnToggleTheme(object sender, RoutedEventArgs e) => App.ToggleTheme();
 
+    private void OnHotkeysClick(object sender, RoutedEventArgs e)
+    {
+        var window = new HotkeyWindow { Owner = this };
+        window.ShowDialog();
+    }
+
     private void OnProfileClick(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu();
@@ -521,7 +528,22 @@ public partial class ShellWindow : Window
         ShowToast(name);
     }
 
-    private void ApplyProfile(MonitorProfile profile)
+    public void CycleProfile()
+    {
+        var profiles = App.Settings.Profiles;
+        if (profiles.Count == 0)
+        {
+            ShowToast(L.Get("ProfileEmpty"));
+            return;
+        }
+
+        _profileCursor = (_profileCursor + 1) % profiles.Count;
+        var profile = profiles[_profileCursor];
+        ApplyProfile(profile);
+        ShowToast(profile.Name);
+    }
+
+    public void ApplyProfile(MonitorProfile profile)
     {
         var match = _allSources.FirstOrDefault(w => w.Key == profile.SourceKey);
         if (match is null)

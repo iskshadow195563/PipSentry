@@ -4,6 +4,16 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.4.0 - 2026-11-28
+
+Added
+- Custom global hotkeys: an in-app recorder for show/hide, pause, snapshot, back, click-through and next preset. Each binding is validated and re-registered immediately.
+- Preset cycling hotkey (default `Ctrl+Alt+N`) walks through saved setups.
+- `--render --window hotkeys` renders the hotkey dialog for screenshots and review.
+
+Fixed
+- A duplicate localization key (`HotkeyHint`) that made the app fail at startup.
+
 ## 1.3.0 - 2026-11-28
 
 Added

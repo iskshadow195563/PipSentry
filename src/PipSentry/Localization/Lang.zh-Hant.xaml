@@ -151,4 +151,16 @@
   <sys:String x:Key="ProfileDeleteAll">清除所有預設</sys:String>
   <sys:String x:Key="ProfileMissing">找不到原本的視窗，已改用同名視窗</sys:String>
 
+  <sys:String x:Key="HotkeysTitle">全域熱鍵</sys:String>
+  <sys:String x:Key="HotkeyToggle">顯示／隱藏監控窗</sys:String>
+  <sys:String x:Key="HotkeyPause">暫停／繼續</sys:String>
+  <sys:String x:Key="HotkeyShot">儲存截圖</sys:String>
+  <sys:String x:Key="HotkeyBack">回到設定</sys:String>
+  <sys:String x:Key="HotkeyThrough">切換點擊穿透</sys:String>
+  <sys:String x:Key="HotkeyNext">下一個預設組合</sys:String>
+  <sys:String x:Key="HotkeyRecord">錄製</sys:String>
+  <sys:String x:Key="HotkeyRecording">按下組合鍵…</sys:String>
+  <sys:String x:Key="HotkeyClose">完成</sys:String>
+  <sys:String x:Key="MsgHotkeyBusy">有熱鍵被其他程式占用，已跳過</sys:String>
+
 </ResourceDictionary>

@@ -151,4 +151,16 @@
   <sys:String x:Key="ProfileDeleteAll">Clear all presets</sys:String>
   <sys:String x:Key="ProfileMissing">Original window not found, matched by title</sys:String>
 
+  <sys:String x:Key="HotkeysTitle">Global hotkeys</sys:String>
+  <sys:String x:Key="HotkeyToggle">Show / hide monitor</sys:String>
+  <sys:String x:Key="HotkeyPause">Pause / resume</sys:String>
+  <sys:String x:Key="HotkeyShot">Save snapshot</sys:String>
+  <sys:String x:Key="HotkeyBack">Back to settings</sys:String>
+  <sys:String x:Key="HotkeyThrough">Toggle click-through</sys:String>
+  <sys:String x:Key="HotkeyNext">Next preset</sys:String>
+  <sys:String x:Key="HotkeyRecord">Record</sys:String>
+  <sys:String x:Key="HotkeyRecording">Press a combination…</sys:String>
+  <sys:String x:Key="HotkeyClose">Done</sys:String>
+  <sys:String x:Key="MsgHotkeyBusy">Some hotkeys are taken by another app and were skipped</sys:String>
+
 </ResourceDictionary>

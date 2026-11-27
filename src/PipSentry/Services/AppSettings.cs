@@ -31,6 +31,13 @@ public sealed class AppSettings
     public bool CaptureCursor { get; set; }
     public bool StopWhenHidden { get; set; }
 
+    public string HotkeyToggle { get; set; } = "Ctrl+Alt+M";
+    public string HotkeyPause { get; set; } = "Ctrl+Alt+P";
+    public string HotkeyScreenshot { get; set; } = "Ctrl+Alt+S";
+    public string HotkeyBack { get; set; } = "Ctrl+Alt+R";
+    public string HotkeyThrough { get; set; } = "Ctrl+Alt+T";
+    public string HotkeyNextPreset { get; set; } = "Ctrl+Alt+N";
+
     public bool KeepAlive { get; set; } = true;
     public bool PreventSleep { get; set; } = true;
     public bool OptimizeTargetApp { get; set; }

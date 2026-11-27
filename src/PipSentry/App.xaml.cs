@@ -20,11 +20,7 @@ public partial class App : Application
     private static DateTime _lastToastAt;
     private static string _lastToastText = string.Empty;
     private static bool _isExiting;
-    private static int _hotkeyToggle;
-    private static int _hotkeyPause;
-    private static int _hotkeyScreenshot;
-    private static int _hotkeyShell;
-    private static int _hotkeyThrough;
+    private static readonly System.Collections.Generic.List<(int Id, string Action)> HotkeyIds = new();
 
     public static AppSettings Settings { get; private set; } = new();
     public static HotkeyHost? Hotkeys { get; private set; }
@@ -38,6 +34,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => AppLog.Write("fatal: " + args.ExceptionObject);
 
         // Single frame dump: PipSentry.exe --grab <png> [--scale WxH] [--region x,y,w,h]
         var grabPath = GetArg(e.Args, "--grab");
@@ -73,7 +70,14 @@ public partial class App : Application
             Settings.Language = GetArg(e.Args, "--lang") ?? (string.IsNullOrWhiteSpace(Settings.Language) ? Loc.DetectSystem() : Settings.Language);
             Loc.Apply(Settings.Language);
             ThemeManager.Apply(GetArg(e.Args, "--theme") ?? Settings.Theme);
-            RenderShell(renderPath!);
+            try
+            {
+                RenderShell(renderPath!, GetArg(e.Args, "--window"));
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write("render failed: " + ex);
+            }
             Current.Shutdown();
             return;
         }
@@ -135,12 +139,8 @@ public partial class App : Application
         Shell.Show();
 
         Hotkeys = new HotkeyHost();
-        _hotkeyToggle = Hotkeys.Register(ModifierKeys.Control | ModifierKeys.Alt, Key.M);
-        _hotkeyPause = Hotkeys.Register(ModifierKeys.Control | ModifierKeys.Alt, Key.P);
-        _hotkeyScreenshot = Hotkeys.Register(ModifierKeys.Control | ModifierKeys.Alt, Key.S);
-        _hotkeyShell = Hotkeys.Register(ModifierKeys.Control | ModifierKeys.Alt, Key.R);
-        _hotkeyThrough = Hotkeys.Register(ModifierKeys.Control | ModifierKeys.Alt, Key.T);
         Hotkeys.Pressed += OnHotkey;
+        RegisterHotkeys();
 
         Tray = new TrayService();
         Tray.ShowShellRequested += ShowShell;
@@ -150,13 +150,54 @@ public partial class App : Application
         Tray.ExitRequested += ShutdownApp;
     }
 
+    public static bool RegisterHotkeys()
+    {
+        if (Hotkeys is null) return false;
+
+        foreach (var (id, _) in HotkeyIds) Hotkeys.Unregister(id);
+        HotkeyIds.Clear();
+
+        var failed = false;
+        failed |= !AddHotkey("toggle", Settings.HotkeyToggle);
+        failed |= !AddHotkey("pause", Settings.HotkeyPause);
+        failed |= !AddHotkey("shot", Settings.HotkeyScreenshot);
+        failed |= !AddHotkey("back", Settings.HotkeyBack);
+        failed |= !AddHotkey("through", Settings.HotkeyThrough);
+        failed |= !AddHotkey("next", Settings.HotkeyNextPreset);
+        return !failed;
+    }
+
+    private static bool AddHotkey(string action, string combo)
+    {
+        if (!HotkeyBinding.TryParse(combo, out var modifiers, out var key)) return false;
+        var id = Hotkeys!.Register(modifiers, key);
+        if (id == 0)
+        {
+            AppLog.Write($"hotkey unavailable: {action} = {combo}");
+            return false;
+        }
+
+        HotkeyIds.Add((id, action));
+        return true;
+    }
+
     private static void OnHotkey(int id)
     {
-        if (id == _hotkeyToggle) ToggleMonitorVisibility();
-        else if (id == _hotkeyPause) Monitor?.TogglePause();
-        else if (id == _hotkeyScreenshot) Monitor?.SaveScreenshot();
-        else if (id == _hotkeyShell) ShowShell();
-        else if (id == _hotkeyThrough) Monitor?.ToggleClickThrough();
+        var action = string.Empty;
+        foreach (var entry in HotkeyIds)
+        {
+            if (entry.Id == id) { action = entry.Action; break; }
+        }
+
+        switch (action)
+        {
+            case "toggle": ToggleMonitorVisibility(); break;
+            case "pause": Monitor?.TogglePause(); break;
+            case "shot": Monitor?.SaveScreenshot(); break;
+            case "back": ShowShell(); break;
+            case "through": Monitor?.ToggleClickThrough(); break;
+            case "next": Shell?.CycleProfile(); break;
+        }
     }
 
     public static void StartMonitoring(WindowInfo source)
@@ -417,17 +458,22 @@ public partial class App : Application
         System.IO.File.WriteAllText(outputPath, report.ToString());
     }
 
-    private static void RenderShell(string path)
+    private static void RenderShell(string path, string? windowKind)
     {
-        var window = new ShellWindow { Width = 1148, Height = 866 };
+        Window window = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase)
+            ? new HotkeyWindow()
+            : new ShellWindow();
+        window.Width = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase) ? 560 : 1148;
+        window.Height = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase) ? 430 : 866;
+
         var content = (FrameworkElement)window.Content;
-        content.Measure(new Size(1148, 866));
-        content.Arrange(new Rect(0, 0, 1148, 866));
+        content.Measure(new Size(window.Width, window.Height));
+        content.Arrange(new Rect(0, 0, window.Width, window.Height));
         content.UpdateLayout();
 
         const double dpi = 1.5;
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
-            (int)(1148 * dpi), (int)(866 * dpi), 96 * dpi, 96 * dpi,
+            (int)(window.Width * dpi), (int)(window.Height * dpi), 96 * dpi, 96 * dpi,
             System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(content);
 
