@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Input;
 using PipSentry.Capture;
 using PipSentry.Interop;
@@ -32,6 +34,18 @@ public partial class App : Application
     {
         base.OnStartup(e);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        // Capture benchmark: PipSentry.exe --bench <report.txt> [--fps 60] [--region x,y,w,h]
+        var benchPath = GetArg(e.Args, "--bench");
+        if (!string.IsNullOrWhiteSpace(benchPath))
+        {
+            Settings = SettingsStore.Load();
+            Loc.Apply(Settings.Language);
+            ThemeManager.Apply(Settings.Theme);
+            RunBench(benchPath!, GetArg(e.Args, "--fps"), GetArg(e.Args, "--region"));
+            Current.Shutdown();
+            return;
+        }
 
         // Headless UI render: PipSentry.exe --render <png> [--lang zh-Hant|zh-Hans|en-US] [--theme Dark|Light]
         var renderPath = GetArg(e.Args, "--render");
@@ -190,6 +204,75 @@ public partial class App : Application
         }
 
         return null;
+    }
+
+    private static void RunBench(string outputPath, string? fpsArg, string? regionArg)
+    {
+        const double seconds = 10;
+        var targetFps = int.TryParse(fpsArg, out var parsedFps) ? parsedFps : 60;
+        PixelRect? region = null;
+
+        if (!string.IsNullOrWhiteSpace(regionArg))
+        {
+            var parts = regionArg.Split(',', 'x');
+            if (parts.Length == 4 &&
+                int.TryParse(parts[0], out var rx) &&
+                int.TryParse(parts[1], out var ry) &&
+                int.TryParse(parts[2], out var rw) &&
+                int.TryParse(parts[3], out var rh))
+            {
+                region = new PixelRect(rx, ry, rw, rh);
+            }
+        }
+
+        var source = WindowCatalog.Enumerate().FirstOrDefault(w => w.IsDisplay);
+        if (source is null)
+        {
+            System.IO.File.WriteAllText(outputPath, "no display found");
+            return;
+        }
+
+        var frames = 0;
+        long bytes = 0;
+        var controller = new CaptureController(Current.Dispatcher);
+        controller.FrameReady += frame =>
+        {
+            frames++;
+            bytes += frame.Buffer.Length;
+        };
+
+        var report = new System.Text.StringBuilder();
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+        var cpuBefore = process.TotalProcessorTime;
+        var memoryBefore = process.WorkingSet64;
+        var started = DateTime.UtcNow;
+
+        controller.Start(source, region, targetFps);
+
+        var pump = new DispatcherFrame();
+        var timer = new DispatcherTimer(TimeSpan.FromSeconds(seconds), DispatcherPriority.Background,
+            (_, _) => pump.Continue = false, Current.Dispatcher);
+        timer.Start();
+        Dispatcher.PushFrame(pump);
+
+        var elapsed = (DateTime.UtcNow - started).TotalSeconds;
+        process.Refresh();
+        var cpuUsed = process.TotalProcessorTime - cpuBefore;
+        var memoryAfter = process.WorkingSet64;
+        controller.Dispose();
+
+        report.AppendLine($"source        : display {source.Width}x{source.Height}");
+        report.AppendLine($"region        : {(region is { IsEmpty: false } r ? $"{r.X},{r.Y} {r.Width}x{r.Height}" : "full")}");
+        report.AppendLine($"target fps    : {targetFps}");
+        report.AppendLine($"elapsed       : {elapsed:0.0} s");
+        report.AppendLine($"frames        : {frames} ({frames / elapsed:0.0} fps)");
+        report.AppendLine($"pixel traffic : {bytes / 1024.0 / 1024.0 / elapsed:0.0} MB/s (frames copied to CPU)");
+        report.AppendLine($"cpu           : {cpuUsed.TotalSeconds / elapsed * 100:0.0}% of one core, " +
+                          $"{cpuUsed.TotalSeconds / elapsed * 100 / Environment.ProcessorCount:0.00}% of {Environment.ProcessorCount} cores");
+        report.AppendLine($"working set   : {memoryBefore / 1024 / 1024} MB -> {memoryAfter / 1024 / 1024} MB");
+
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outputPath) ?? ".");
+        System.IO.File.WriteAllText(outputPath, report.ToString());
     }
 
     private static void RenderShell(string path)
