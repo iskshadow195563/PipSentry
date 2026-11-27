@@ -63,7 +63,6 @@ public sealed class GdiCaptureEngine : ICaptureEngine
 
     public void SetCaptureCursor(bool enabled)
     {
-        // GDI 擷取不含游標，無需處理。
     }
 
     private void Loop()

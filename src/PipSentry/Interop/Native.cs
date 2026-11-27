@@ -145,16 +145,10 @@ internal static class Native
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
 
     [DllImport("user32.dll")]
-    public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
-
-    [DllImport("user32.dll")]
     public static extern bool GetClientRect(IntPtr hWnd, out RECT rect);
 
     [DllImport("user32.dll")]
     public static extern bool ClientToScreen(IntPtr hWnd, ref POINT point);
-
-    [DllImport("user32.dll")]
-    public static extern bool ScreenToClient(IntPtr hWnd, ref POINT point);
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int index);
@@ -170,12 +164,6 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr rect, IntPtr region, uint flags);
-
-    [DllImport("user32.dll")]
-    public static extern bool SetForegroundWindow(IntPtr hWnd);
-
-    [DllImport("user32.dll")]
-    public static extern bool ShowWindow(IntPtr hWnd, int cmd);
 
     [DllImport("user32.dll")]
     public static extern IntPtr MonitorFromWindow(IntPtr hWnd, uint flags);
@@ -196,9 +184,6 @@ internal static class Native
     public static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
 
     [DllImport("user32.dll")]
-    public static extern IntPtr GetDesktopWindow();
-
-    [DllImport("user32.dll")]
     public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdc, uint flags);
 
     [DllImport("user32.dll")]
@@ -209,9 +194,6 @@ internal static class Native
 
     [DllImport("dwmapi.dll")]
     public static extern int DwmGetWindowAttribute(IntPtr hwnd, int attribute, out int value, int size);
-
-    [DllImport("dwmapi.dll", EntryPoint = "DwmGetWindowAttribute")]
-    public static extern int DwmGetWindowAttributeRect(IntPtr hwnd, int attribute, out RECT value, int size);
 
     [DllImport("dwmapi.dll")]
     public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
@@ -250,5 +232,4 @@ internal static class Native
     public static readonly IntPtr HWND_NOTOPMOST = new(-2);
     public static readonly IntPtr HWND_MESSAGE = new(-3);
 
-    public static StringBuilder TextBuffer(int capacity) => new(capacity);
 }

@@ -28,7 +28,6 @@ public sealed class AppSettings
     public bool ClickThrough { get; set; }
     public bool ShowBorder { get; set; } = true;
     public bool LockAspect { get; set; } = true;
-    public bool ShowStats { get; set; } = true;
     public bool CaptureCursor { get; set; }
 
     public bool KeepAlive { get; set; } = true;
@@ -36,8 +35,6 @@ public sealed class AppSettings
     public bool OptimizeTargetApp { get; set; }
     public bool NudgeTarget { get; set; }
 
-    public bool MinimizeToTray { get; set; } = true;
-    public bool StartMonitorOnLaunch { get; set; }
 
     public bool HasMonitorBounds { get; set; }
     public double MonitorLeft { get; set; }

@@ -427,7 +427,7 @@ public partial class MonitorWindow : Window
 
     private Rect GetWorkAreaDip()
     {
-        var work = ScreenGeometry.GetMonitorWorkArea(Handle);
+        var work = ScreenGeometry.GetMonitorWorkArea(WindowHandle);
         var dpi = VisualTreeHelper.GetDpi(this).DpiScaleX;
         if (dpi <= 0) dpi = 1;
         return work.Width <= 0
@@ -586,6 +586,8 @@ public partial class MonitorWindow : Window
         }
     }
 
+    private IntPtr WindowHandle => new WindowInteropHelper(this).Handle;
+
     public void SaveBounds()
     {
         App.Settings.HasMonitorBounds = true;
@@ -595,6 +597,4 @@ public partial class MonitorWindow : Window
         App.Settings.MonitorHeight = Height;
         SettingsStore.Save(App.Settings);
     }
-
-    public IntPtr Handle => new WindowInteropHelper(this).Handle;
 }

@@ -506,13 +506,6 @@ public partial class ShellWindow : Window
         _toastTimer.Start();
     }
 
-    public void PausePreview() => _preview.Pause();
-
-    public void ResumePreview()
-    {
-        if (_selected is not null) StartPreview();
-    }
-
     public void RefreshFromSettings()
     {
         ApplySettingsToUi();
