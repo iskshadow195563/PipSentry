@@ -1,0 +1,58 @@
+<Window x:Class="PipSentry.Views.RegionSelectorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="框選監控區域" WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
+        AllowsTransparency="True" Background="Transparent" Topmost="True"
+        WindowStartupLocation="Manual" FontFamily="{StaticResource UiFont}" Cursor="Cross">
+
+  <Window.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/Themes/Dark.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Window.Resources>
+  <Grid x:Name="Host" Background="#01000000" ClipToBounds="True">
+    <Rectangle x:Name="SnapshotRect">
+      <Rectangle.Fill>
+        <ImageBrush x:Name="SnapshotBrush" Stretch="Fill" />
+      </Rectangle.Fill>
+    </Rectangle>
+
+    <Path x:Name="DimPath" Fill="#A6000000" IsHitTestVisible="False" />
+
+    <Border x:Name="SelectionBox" BorderBrush="{DynamicResource Accent}" BorderThickness="1.5" Visibility="Collapsed"
+            IsHitTestVisible="False">
+      <Border Background="#243FD2F5" BorderBrush="{DynamicResource Accent}" BorderThickness="0" />
+    </Border>
+
+    <!-- corner handles -->
+    <Canvas x:Name="HandleLayer" IsHitTestVisible="False" />
+
+    <Border x:Name="SizeTip" Background="#E60A1018" CornerRadius="7" Padding="9,5" Visibility="Collapsed"
+            BorderBrush="#33FFFFFF" BorderThickness="1" IsHitTestVisible="False">
+      <TextBlock x:Name="SizeTipText" Foreground="{DynamicResource Accent}" FontSize="11" />
+    </Border>
+
+    <Border x:Name="HintBar" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,22,0,0"
+            Background="#EE0A1018" CornerRadius="12" Padding="14,10" BorderBrush="#2AFFFFFF"
+            BorderThickness="1">
+      <StackPanel Orientation="Horizontal">
+        <Border Width="26" Height="26" CornerRadius="7" Background="{DynamicResource AccentGradient}"
+                VerticalAlignment="Center">
+          <Path Data="{StaticResource IcoCrop}" Stroke="#FF06131C" StrokeThickness="1.5" Width="14" Height="14"
+                Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Margin="11,0,18,0" VerticalAlignment="Center">
+          <TextBlock Text="拖曳框選要持續監控的區域" FontSize="12" Foreground="{DynamicResource Text0}" />
+          <TextBlock Text="拖曳框內可移動 · 方向鍵微調 · Esc 取消" FontSize="10"
+                     Foreground="{DynamicResource Text3}" Margin="0,2,0,0" />
+        </StackPanel>
+        <Button x:Name="CancelButton" Content="取消" Style="{StaticResource GhostBtn}" Height="30"
+                Click="OnCancel" Margin="0,0,8,0" Cursor="Arrow" />
+        <Button x:Name="AcceptButton" Content="套用" Style="{StaticResource PrimaryBtn}" Height="30"
+                Padding="16,0" FontSize="12" Click="OnAccept" IsEnabled="False" Cursor="Arrow" />
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

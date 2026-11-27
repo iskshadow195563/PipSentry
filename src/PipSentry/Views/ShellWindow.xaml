@@ -1,0 +1,483 @@
+<Window x:Class="PipSentry.Views.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="PipSentry" Width="1148" Height="866" MinWidth="1000" MinHeight="700"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
+        Background="{DynamicResource Bg0}" Foreground="{DynamicResource Text0}"
+        FontFamily="{StaticResource UiFont}" UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal" SnapsToDevicePixels="True">
+
+  <shell:WindowChrome.WindowChrome>
+    <shell:WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0"
+                        CornerRadius="0" UseAeroCaptionButtons="False" />
+  </shell:WindowChrome.WindowChrome>
+
+  <Border BorderBrush="{DynamicResource Stroke}" BorderThickness="1" Background="{DynamicResource Bg0}">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="62" />
+        <RowDefinition Height="*" />
+      </Grid.RowDefinitions>
+
+      <!-- Title bar -->
+      <Grid Grid.Row="0" Background="{DynamicResource PanelGradient}" MouseLeftButtonDown="OnTitleBarDrag">
+        <Rectangle Fill="{DynamicResource HeaderGlow}" IsHitTestVisible="False" />
+        <Rectangle Height="1" VerticalAlignment="Bottom" Fill="{DynamicResource Stroke}" />
+
+        <StackPanel Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+          <Border Width="32" Height="32" CornerRadius="9" Background="{DynamicResource AccentGradient}">
+            <Grid>
+              <Path Data="{StaticResource IcoMonitor}" Stroke="#FF06131C" StrokeThickness="1.6"
+                    StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="16" Height="16" Stretch="Uniform"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Border Width="9" Height="7" CornerRadius="2" Background="#FF06131C" Opacity="0.92"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,7" />
+            </Grid>
+          </Border>
+          <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="PipSentry" Style="{StaticResource H1}" FontSize="15.5" />
+            <TextBlock Text="懸浮視窗監控 · 遊戲掛機不中斷" Style="{StaticResource Caption}" Margin="0,1,0,0" />
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
+          <Button x:Name="ThemeButton" Style="{StaticResource IconBtn}" Tag="{StaticResource IcoSun}"
+                  Click="OnToggleTheme" ToolTip="切換淺色 / 深色"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True" Margin="0,0,2,0" />
+          <Button Style="{StaticResource IconBtn}" Tag="{StaticResource IcoMin}" Click="OnMinimize"
+                  ToolTip="最小化" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+          <Button Style="{StaticResource IconBtn}" Tag="{StaticResource IcoClose}" Click="OnCloseWindow"
+                  ToolTip="關閉並結束" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+        </StackPanel>
+      </Grid>
+
+      <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="348" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Source list -->
+        <Border Grid.Column="0" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Stroke}"
+                BorderThickness="0,0,1,0">
+          <Grid Margin="16,16,14,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="4,0,0,10">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="選擇視窗" Style="{StaticResource SectionLabel}" Margin="0,0,8,10" />
+                <Border Background="{DynamicResource Bg3}" CornerRadius="6" Padding="7,0" Height="16"
+                        VerticalAlignment="Center" Margin="0,0,0,10">
+                  <TextBlock x:Name="SourceCount" Text="0" FontSize="9.5" Foreground="{DynamicResource Text2}"
+                             VerticalAlignment="Center" />
+                </Border>
+              </StackPanel>
+              <Button x:Name="RefreshButton" Style="{StaticResource IconBtnSm}" Tag="{StaticResource IcoRefresh}"
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Click="OnRefresh"
+                      ToolTip="重新整理 (F5)" Margin="0,0,2,0" />
+            </Grid>
+
+            <TextBox x:Name="SearchBox" Grid.Row="1" Style="{StaticResource SearchBox}"
+                     TextChanged="OnSearchTextChanged" Margin="0,0,0,10" />
+
+            <ListBox x:Name="SourceList" Grid.Row="2" Background="Transparent" BorderThickness="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemContainerStyle="{StaticResource WindowItem}"
+                     SelectionChanged="OnSourceSelectionChanged"
+                     MouseDoubleClick="OnSourceDoubleClick">
+              <ListBox.Template>
+                <ControlTemplate TargetType="ListBox">
+                  <ScrollViewer Style="{StaticResource FlatScrollViewer}" Focusable="False">
+                    <ItemsPresenter />
+                  </ScrollViewer>
+                </ControlTemplate>
+              </ListBox.Template>
+              <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel />
+                </ItemsPanelTemplate>
+              </ListBox.ItemsPanel>
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource Bg4}"
+                            VerticalAlignment="Center">
+                      <Grid>
+                        <Path Data="{StaticResource IcoMonitor}" Stroke="{DynamicResource Text2}" StrokeThickness="1.2"
+                              Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center"
+                              VerticalAlignment="Center" />
+                        <Image Source="{Binding Icon}" Width="20" Height="20"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                      </Grid>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Title}" Foreground="{DynamicResource Text0}" FontSize="12.5"
+                                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                      <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource Text3}" FontSize="10.5"
+                                 TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Border Grid.Column="2" Background="#22FFB13D" CornerRadius="5" Padding="6,1"
+                            VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Badge}" FontSize="9.5" Foreground="{DynamicResource Warn}">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding Badge}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                    </Border>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Grid.Row="3" Text="F5 重新整理 · 雙擊直接開始監控" Style="{StaticResource Caption}"
+                       FontSize="10" Foreground="{DynamicResource Text3}" Margin="4,8,0,0" />
+          </Grid>
+        </Border>
+
+        <!-- Configuration -->
+        <Grid Grid.Column="1" Margin="22,16,22,14">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <StackPanel Grid.Row="0" Margin="2,0,0,10">
+            <TextBlock x:Name="SelectedTitle" Text="尚未選擇視窗" Style="{StaticResource H1}" FontSize="17"
+                       TextTrimming="CharacterEllipsis" />
+            <TextBlock x:Name="SelectedMeta" Text="從左側清單挑選要持續觀察的視窗"
+                       Style="{StaticResource Caption}" Margin="0,3,0,0" />
+          </StackPanel>
+
+          <!-- Preview card -->
+          <Border Grid.Row="1" Background="{DynamicResource Bg1}" BorderBrush="{DynamicResource Stroke}"
+                  BorderThickness="1" CornerRadius="14" Padding="10" Margin="0,0,0,12">
+            <Grid Height="168">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+
+              <Border CornerRadius="10" Background="#FF04070A" Width="286">
+                <Grid>
+                  <Rectangle x:Name="PreviewSurface" RadiusX="10" RadiusY="10">
+                    <Rectangle.Fill>
+                      <ImageBrush x:Name="PreviewBrush" Stretch="Uniform" />
+                    </Rectangle.Fill>
+                  </Rectangle>
+                  <Border CornerRadius="10" BorderBrush="{DynamicResource StrokeSoft}" BorderThickness="1" />
+
+                  <StackPanel x:Name="PreviewEmpty" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Path Data="{StaticResource IcoTarget}" Stroke="{DynamicResource Text3}" StrokeThickness="1.2"
+                          Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Center" />
+                    <TextBlock Text="選擇視窗後即時預覽" Style="{StaticResource Caption}" Margin="0,8,0,0"
+                               HorizontalAlignment="Center" FontSize="10.5" />
+                  </StackPanel>
+
+                  <Border x:Name="PreviewBadge" Background="#B3060A0E" CornerRadius="6" Padding="8,3"
+                          HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8" Visibility="Collapsed">
+                    <StackPanel Orientation="Horizontal">
+                      <Ellipse Width="5" Height="5" Fill="{DynamicResource Live}" VerticalAlignment="Center" />
+                      <TextBlock Text="LIVE" FontSize="9" Foreground="{DynamicResource Text1}" Margin="5,0,0,0"
+                                 FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Border>
+
+                  <Border x:Name="PreviewSizeBadge" Background="#B3060A0E" CornerRadius="6" Padding="8,3"
+                          HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="8" Visibility="Collapsed">
+                    <TextBlock x:Name="PreviewSizeText" Text="" FontSize="9.5" Foreground="{DynamicResource Text2}" />
+                  </Border>
+                </Grid>
+              </Border>
+
+              <Grid Grid.Column="1" Margin="16,2,2,0">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="擷取資訊" Style="{StaticResource SectionLabel}" Margin="0,0,0,8" />
+                <Grid Grid.Row="1" Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="視窗" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center" />
+                  <TextBlock x:Name="MetaTitle" Grid.Column="1" Text="—" Style="{StaticResource Body}" FontSize="11.5"
+                             TextTrimming="CharacterEllipsis" />
+                </Grid>
+                <Grid Grid.Row="2" Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="解析度" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center" />
+                  <TextBlock x:Name="MetaResolution" Grid.Column="1" Text="—" Style="{StaticResource Body}" FontSize="11.5" />
+                </Grid>
+                <Grid Grid.Row="3" Margin="0,0,0,6">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="更新率" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center" />
+                  <TextBlock x:Name="MetaFps" Grid.Column="1" Text="—" Style="{StaticResource Body}" FontSize="11.5" />
+                </Grid>
+                <Grid Grid.Row="4">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="擷取模式" Style="{StaticResource Caption}" FontSize="11" VerticalAlignment="Center" />
+                  <TextBlock x:Name="MetaMode" Grid.Column="1" Text="Windows Graphics Capture"
+                             Style="{StaticResource Body}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                </Grid>
+
+                <Border Grid.Row="5" VerticalAlignment="Bottom" Background="{DynamicResource AccentSoft}"
+                        CornerRadius="7" Padding="10,7">
+                  <StackPanel>
+                    <TextBlock Text="小提示" FontSize="9.5" Foreground="{DynamicResource Accent}" FontWeight="SemiBold" />
+                    <TextBlock x:Name="MetaHintText" Text="遊戲請使用「無邊框視窗」模式，獨佔全螢幕無法擷取。"
+                               FontSize="10.5" Foreground="{DynamicResource Text1}" Margin="0,3,0,0" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </Grid>
+          </Border>
+
+          <ScrollViewer Grid.Row="2" Style="{StaticResource FlatScrollViewer}" VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,6,0">
+
+              <!-- Range + rate -->
+              <Grid Margin="0,0,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="66" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="監控範圍" Style="{StaticResource Body}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                  <Border Style="{StaticResource SegmentGroup}">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="ModeFull" Content="整個視窗" GroupName="Mode" Style="{StaticResource Segment}"
+                                   IsChecked="True" Checked="OnModeChanged" Height="30" />
+                      <RadioButton x:Name="ModeRegion" Content="自訂區域" GroupName="Mode" Style="{StaticResource Segment}"
+                                   Checked="OnModeChanged" Height="30" />
+                    </StackPanel>
+                  </Border>
+                  <TextBlock x:Name="RegionLabel" Text="整個視窗範圍" Style="{StaticResource Caption}"
+                             VerticalAlignment="Center" Margin="12,0,0,0" />
+                </StackPanel>
+                <Button x:Name="RegionButton" Grid.Column="2" Content="框選區域" Style="{StaticResource GhostBtn}"
+                        Click="OnPickRegion" IsEnabled="False" Height="31" />
+
+                <TextBlock Grid.Row="1" Text="更新率" Style="{StaticResource Body}" VerticalAlignment="Center"
+                           Margin="0,12,0,0" />
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,12,0,0">
+                  <Border Style="{StaticResource SegmentGroup}">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="Fps15" Content="15" GroupName="Fps" Style="{StaticResource Segment}" Height="30"
+                                   Checked="OnFpsChanged" />
+                      <RadioButton x:Name="Fps30" Content="30" GroupName="Fps" Style="{StaticResource Segment}"
+                                   IsChecked="True" Height="30" Checked="OnFpsChanged" />
+                      <RadioButton x:Name="Fps60" Content="60" GroupName="Fps" Style="{StaticResource Segment}" Height="30"
+                                   Checked="OnFpsChanged" />
+                      <RadioButton x:Name="Fps120" Content="120" GroupName="Fps" Style="{StaticResource Segment}"
+                                   Height="30" Checked="OnFpsChanged" />
+                    </StackPanel>
+                  </Border>
+                  <TextBlock Text="越高越流暢，也越吃 CPU" Style="{StaticResource Caption}" VerticalAlignment="Center"
+                             Margin="12,0,0,0" FontSize="10.5" />
+                </StackPanel>
+              </Grid>
+
+              <!-- Keep alive -->
+              <TextBlock Text="背景持續執行" Style="{StaticResource SectionLabel}" Margin="2,16,0,6" />
+              <UniformGrid Columns="2" Margin="-4,0">
+                <Border Style="{StaticResource Tile}" ToolTip="開啟擷取工作階段，讓 DWM 持續合成來源視窗，降低遊戲轉背景後被降頻或停止更新的機率。">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="保持來源持續更新" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="DWM 持續合成" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchKeepAlive" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" IsChecked="True" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}" ToolTip="掛機時阻止系統與螢幕進入休眠（SetThreadExecutionState）。">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="防止系統休眠" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="螢幕保持喚醒" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchPreventSleep" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" IsChecked="True" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}" ToolTip="寫入 HKCU UserGpuPreferences：SwapEffectUpgradeEnable=0，關閉視窗化遊戲最佳化（需重新啟動遊戲）。">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="停用視窗遊戲最佳化" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="寫入 DirectX 偏好" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchOptimize" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}" ToolTip="每秒對目標視窗送出重繪訊息；對傳統 GDI 視窗有效。">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="強制重繪目標" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="每秒送出重繪" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchNudge" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+              </UniformGrid>
+
+              <!-- Overlay window -->
+              <TextBlock Text="監控視窗" Style="{StaticResource SectionLabel}" Margin="2,14,0,6" />
+              <UniformGrid Columns="2" Margin="-4,0">
+                <Border Style="{StaticResource Tile}">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="保持置頂" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="蓋在遊戲之上" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchTopmost" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" IsChecked="True" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}" ToolTip="滑鼠事件直接穿過監控視窗；Ctrl+Alt+T 可切換。">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="點擊穿透" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="滑鼠可穿過" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchClickThrough" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="邊框與資訊" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="顯示 FPS / 尺寸" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchBorder" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" IsChecked="True" />
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource Tile}">
+                  <Grid>
+                    <StackPanel Margin="0,0,44,0">
+                      <TextBlock Text="鎖定長寬比" Style="{StaticResource Body}" FontWeight="SemiBold" />
+                      <TextBlock Text="縮放不變形" Style="{StaticResource Caption}" FontSize="10" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <CheckBox x:Name="SwitchLockAspect" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                              VerticalAlignment="Center" IsChecked="True" />
+                  </Grid>
+                </Border>
+              </UniformGrid>
+
+              <Grid Margin="2,14,2,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="66" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="縮放方式" Style="{StaticResource Body}" VerticalAlignment="Center" />
+                <Border Grid.Column="1" Style="{StaticResource SegmentGroup}" HorizontalAlignment="Left">
+                  <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="ScaleFit" Content="完整顯示" GroupName="Scale" Style="{StaticResource Segment}"
+                                 Height="28" FontSize="11.5" />
+                    <RadioButton x:Name="ScaleFill" Content="裁切填滿" GroupName="Scale" Style="{StaticResource Segment}"
+                                 Height="28" FontSize="11.5" />
+                    <RadioButton x:Name="ScaleStretch" Content="拉伸" GroupName="Scale" Style="{StaticResource Segment}"
+                                 Height="28" FontSize="11.5" />
+                  </StackPanel>
+                </Border>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                  <TextBlock Text="顯示滑鼠" Style="{StaticResource Caption}" FontSize="10.5" VerticalAlignment="Center"
+                             Margin="0,0,8,0" />
+                  <CheckBox x:Name="SwitchCursor" Style="{StaticResource Switch}" Width="34" Height="20" />
+                </StackPanel>
+              </Grid>
+
+              <Grid Margin="2,6,2,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="66" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="不透明度" Style="{StaticResource Body}" VerticalAlignment="Center" />
+                <Slider x:Name="OpacitySlider" Grid.Column="1" Minimum="0.25" Maximum="1" Value="1"
+                        Margin="0,0,12,0" VerticalAlignment="Center" IsSnapToTickEnabled="True"
+                        TickFrequency="0.05" ValueChanged="OnOpacityChanged" />
+                <TextBlock x:Name="OpacityText" Grid.Column="2" Text="100%" Style="{StaticResource Caption}"
+                           VerticalAlignment="Center" MinWidth="40" TextAlignment="Right" />
+              </Grid>
+            </StackPanel>
+          </ScrollViewer>
+
+          <!-- Footer -->
+          <Border Grid.Row="3" BorderBrush="{DynamicResource Stroke}" BorderThickness="0,1,0,0" Padding="2,12,2,0">
+            <Grid>
+              <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="StatusLine" Text="就緒" Style="{StaticResource Caption}" />
+                <TextBlock Text="Ctrl+Alt+M 顯示/隱藏 · Ctrl+Alt+P 暫停 · Ctrl+Alt+R 回設定"
+                           Style="{StaticResource Caption}" FontSize="10" Foreground="{DynamicResource Text3}"
+                           Margin="0,2,0,0" />
+              </StackPanel>
+              <Button x:Name="StartButton" Style="{StaticResource PrimaryBtn}" HorizontalAlignment="Right"
+                      Width="200" Click="OnStartMonitoring">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="開始監控" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  <Border Background="#33040F16" CornerRadius="5" Padding="6,2" Margin="10,0,0,0"
+                          VerticalAlignment="Center">
+                    <TextBlock Text="Ctrl+Alt+M" FontSize="9.5" Foreground="#FF06222E" />
+                  </Border>
+                </StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+
+      <Border x:Name="Toast" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+              Margin="0,0,0,26" Background="{DynamicResource Bg4}" CornerRadius="10" Padding="16,10"
+              BorderBrush="{DynamicResource StrokeStrong}" BorderThickness="1" Visibility="Collapsed"
+              IsHitTestVisible="False">
+        <TextBlock x:Name="ToastText" Foreground="{DynamicResource Text0}" FontSize="12" />
+      </Border>
+    </Grid>
+  </Border>
+</Window>

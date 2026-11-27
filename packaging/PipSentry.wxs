@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="PipSentry"
+           Manufacturer="PipSentry Studio"
+           Version="1.0.0.0"
+           UpgradeCode="7E1B5C0A-3C41-4C39-9F3D-2A9E0B5D6C71"
+           Scope="perMachine"
+           Language="1028"
+           Codepage="65001"
+           InstallerVersion="500"
+           Compressed="yes">
+
+    <SummaryInformation Description="PipSentry 懸浮視窗監控" Manufacturer="PipSentry Studio" />
+    <MajorUpgrade DowngradeErrorMessage="已偵測到較新版本的 PipSentry，安裝程式將結束。" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon" SourceFile="..\src\PipSentry\Assets\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="PipSentry">
+        <Component Id="ApplicationFiles" Guid="D9C2F1A4-5B77-4C0E-9C7B-0F2E8A6D31C5">
+          <File Id="PipSentryExe" Source="..\dist\PipSentry-portable\PipSentry.exe" KeyPath="yes">
+            <Shortcut Id="StartMenuShortcut"
+                      Directory="AppShortcutFolder"
+                      Name="PipSentry"
+                      Description="懸浮視窗監控 · 遊戲掛機不中斷"
+                      Advertise="yes" />
+            <Shortcut Id="DesktopShortcut"
+                      Directory="DesktopFolder"
+                      Name="PipSentry"
+                      Description="懸浮視窗監控 · 遊戲掛機不中斷"
+                      Advertise="yes" />
+          </File>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppShortcutFolder" Name="PipSentry" />
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="PipSentry 主程式" Level="1">
+      <ComponentRef Id="ApplicationFiles" />
+    </Feature>
+
+  </Package>
+</Wix>

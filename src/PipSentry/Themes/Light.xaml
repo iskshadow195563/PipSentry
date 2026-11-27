@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- PipSentry light palette -->
+  <SolidColorBrush x:Key="Bg0" Color="#FFF3F6FB" />
+  <SolidColorBrush x:Key="Bg1" Color="#FFFBFCFE" />
+  <SolidColorBrush x:Key="Bg2" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="Bg3" Color="#FFEDF2F8" />
+  <SolidColorBrush x:Key="Bg4" Color="#FFE1E8F1" />
+
+  <SolidColorBrush x:Key="Stroke" Color="#FFDCE4EE" />
+  <SolidColorBrush x:Key="StrokeSoft" Color="#FFE9EEF5" />
+  <SolidColorBrush x:Key="StrokeStrong" Color="#FFC3CEDD" />
+
+  <SolidColorBrush x:Key="Text0" Color="#FF0D1622" />
+  <SolidColorBrush x:Key="Text1" Color="#FF2B3A4A" />
+  <SolidColorBrush x:Key="Text2" Color="#FF5D6E80" />
+  <SolidColorBrush x:Key="Text3" Color="#FF8898A9" />
+
+  <SolidColorBrush x:Key="Accent" Color="#FF0EA5C6" />
+  <SolidColorBrush x:Key="Accent2" Color="#FF2563EB" />
+  <SolidColorBrush x:Key="AccentSoft" Color="#1F0EA5C6" />
+  <SolidColorBrush x:Key="AccentGlow" Color="#330EA5C6" />
+
+  <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FF12B8DD" Offset="0" />
+    <GradientStop Color="#FF3B7BF6" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="AccentGradientHover" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#FF32C8EA" Offset="0" />
+    <GradientStop Color="#FF5A8FFF" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="HeaderGlow" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#260EA5C6" Offset="0" />
+    <GradientStop Color="#00000000" Offset="0.7" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="PanelGradient" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#FFFFFFFF" Offset="0" />
+    <GradientStop Color="#FFF7FAFE" Offset="1" />
+  </LinearGradientBrush>
+
+  <SolidColorBrush x:Key="Success" Color="#FF0E9D6E" />
+  <SolidColorBrush x:Key="Warn" Color="#FFB87508" />
+  <SolidColorBrush x:Key="Danger" Color="#FFD93A45" />
+  <SolidColorBrush x:Key="Live" Color="#FFE8404F" />
+
+  <SolidColorBrush x:Key="SwitchThumbOff" Color="#FFB3BFCE" />
+  <SolidColorBrush x:Key="ScrollThumb" Color="#FFC2CCDA" />
+  <SolidColorBrush x:Key="HoverSoft" Color="#0F0D1622" />
+  <SolidColorBrush x:Key="PressedSoft" Color="#1A0D1622" />
+  <SolidColorBrush x:Key="WindowBorder" Color="#FFD5DEE9" />
+
+</ResourceDictionary>
