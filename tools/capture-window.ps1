@@ -1,4 +1,4 @@
-param([string]$ProcessName = "PipSentry", [string]$Out = "D:/double_window/.screens/win.png")
+param([string]$ProcessName = "PipSentry", [string]$Out = (Join-Path $PSScriptRoot "../docs/capture.png"))
 Add-Type -AssemblyName System.Drawing
 Add-Type @"
 using System;

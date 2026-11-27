@@ -1,4 +1,4 @@
-param([string]$OutDir = "D:/double_window/src/PipSentry/Assets")
+param([string]$OutDir = (Join-Path $PSScriptRoot "../src/PipSentry/Assets"))
 Add-Type -AssemblyName System.Drawing
 $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

@@ -113,7 +113,7 @@ src/PipSentry/
   Services/                     設定、系統匣、防休眠、開機偏好
   Themes/                       設計權杖（色彩、字體）與控制項樣式
 packaging/PipSentry.wxs         WiX v5 安裝專案（MSI）
-tools/                          圖示產生、視窗擷取與自動化腳本
+tools/                          圖示產生、視窗截圖小工具（開發用）
 dist/                           發佈輸出
 ```
 
