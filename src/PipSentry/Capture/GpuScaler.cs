@@ -108,14 +108,18 @@ internal sealed class GpuScaler : IDisposable
             using var sourceBitmap = new Bitmap1(_context!, surface, properties);
 
             _context!.Target = _targetBitmap;
+            var scaleX = (float)width / region.Width;
+            var scaleY = (float)height / region.Height;
+            _context.Transform = new SharpDX.Mathematics.Interop.RawMatrix3x2(scaleX, 0, 0, scaleY, 0, 0);
             _context.BeginDraw();
-            _context.DrawBitmap(
+            _context.DrawImage(
                 sourceBitmap,
-                new RawRectangleF(0, 0, width, height),
-                1f,
-                BitmapInterpolationMode.Linear,
-                new RawRectangleF(region.X, region.Y, region.Right, region.Bottom));
+                new RawVector2(0, 0),
+                new RawRectangleF(region.X, region.Y, region.Right, region.Bottom),
+                InterpolationMode.HighQualityCubic,
+                CompositeMode.SourceCopy);
             _context.EndDraw();
+            _context.Transform = new RawMatrix3x2(1, 0, 0, 1, 0, 0);
 
             _device.ImmediateContext.CopyResource(_target, _staging);
             return true;

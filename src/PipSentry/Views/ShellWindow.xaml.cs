@@ -24,6 +24,7 @@ public partial class ShellWindow : Window
     private WindowInfo? _selected;
     private PixelRect? _pendingRegion;
     private bool _suppressUiEvents;
+    private bool _applyingProfile;
 
     public ShellWindow()
     {
@@ -33,6 +34,7 @@ public partial class ShellWindow : Window
         _preview.FrameReady += OnPreviewFrame;
         _preview.StateChanged += OnPreviewState;
         _preview.SourceSizeChanged += OnPreviewSourceSizeChanged;
+        _preview.BlankDetected += () => ShowToast(L.Get("MsgBlankScreen"));
 
         _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.6) };
         _toastTimer.Tick += (_, _) =>
@@ -228,12 +230,19 @@ public partial class ShellWindow : Window
 
         _selected = info;
         // Keep the persisted region when restoring the same source, otherwise start fresh.
-        _pendingRegion = null;
-        if (info.Key == App.Settings.LastSourceKey && App.Settings.UseRegion && App.Settings.Region is { } saved)
+        if (_applyingProfile)
         {
-            var sourceWidth = App.Settings.RegionSourceWidth > 0 ? App.Settings.RegionSourceWidth : info.Width;
-            var sourceHeight = App.Settings.RegionSourceHeight > 0 ? App.Settings.RegionSourceHeight : info.Height;
-            _pendingRegion = RegionMath.Scale(saved, sourceWidth, sourceHeight, info.Width, info.Height);
+            UpdateRegionUi();
+        }
+        else
+        {
+            _pendingRegion = null;
+            if (info.Key == App.Settings.LastSourceKey && App.Settings.UseRegion && App.Settings.Region is { } saved)
+            {
+                var sourceWidth = App.Settings.RegionSourceWidth > 0 ? App.Settings.RegionSourceWidth : info.Width;
+                var sourceHeight = App.Settings.RegionSourceHeight > 0 ? App.Settings.RegionSourceHeight : info.Height;
+                _pendingRegion = RegionMath.Scale(saved, sourceWidth, sourceHeight, info.Width, info.Height);
+            }
         }
         UpdateRegionUi();
 
@@ -439,6 +448,127 @@ public partial class ShellWindow : Window
     private void OnMinimize(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void OnToggleTheme(object sender, RoutedEventArgs e) => App.ToggleTheme();
+
+    private void OnProfileClick(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu();
+
+        var save = new MenuItem { Header = L.Get("ProfileSave") };
+        save.Click += (_, _) => SaveCurrentProfile();
+        menu.Items.Add(save);
+        menu.Items.Add(new Separator());
+
+        if (App.Settings.Profiles.Count == 0)
+        {
+            menu.Items.Add(new MenuItem { Header = L.Get("ProfileEmpty"), IsEnabled = false });
+        }
+        else
+        {
+            foreach (var profile in App.Settings.Profiles.ToList())
+            {
+                var item = new MenuItem { Header = $"{profile.Name}  ·  {profile.SourceTitle}" };
+                var captured = profile;
+                item.Click += (_, _) => ApplyProfile(captured);
+                menu.Items.Add(item);
+            }
+
+            menu.Items.Add(new Separator());
+            var clear = new MenuItem { Header = L.Get("ProfileDeleteAll") };
+            clear.Click += (_, _) =>
+            {
+                App.Settings.Profiles.Clear();
+                SettingsStore.Save(App.Settings);
+                ShowToast(L.Get("ProfileDeleteAll"));
+            };
+            menu.Items.Add(clear);
+        }
+
+        menu.PlacementTarget = ProfileButton;
+        menu.IsOpen = true;
+    }
+
+    private void SaveCurrentProfile()
+    {
+        if (_selected is null)
+        {
+            ShowToast(L.Get("MsgPickFirst"));
+            return;
+        }
+
+        SaveUiToSettings();
+        var name = _selected.Title.Trim();
+        if (name.Length > 28) name = name[..28];
+        var existing = App.Settings.Profiles.FirstOrDefault(p => p.Name == name);
+        if (existing is not null) App.Settings.Profiles.Remove(existing);
+
+        App.Settings.Profiles.Insert(0, new MonitorProfile
+        {
+            Name = name,
+            SourceKey = _selected.Key,
+            SourceTitle = _selected.Title,
+            UseRegion = App.Settings.UseRegion,
+            RegionX = App.Settings.RegionX,
+            RegionY = App.Settings.RegionY,
+            RegionWidth = App.Settings.RegionWidth,
+            RegionHeight = App.Settings.RegionHeight,
+            RegionSourceWidth = App.Settings.RegionSourceWidth,
+            RegionSourceHeight = App.Settings.RegionSourceHeight,
+            Fps = App.Settings.Fps,
+            ScaleMode = App.Settings.ScaleMode,
+        });
+
+        SettingsStore.Save(App.Settings);
+        ShowToast(name);
+    }
+
+    private void ApplyProfile(MonitorProfile profile)
+    {
+        var match = _allSources.FirstOrDefault(w => w.Key == profile.SourceKey);
+        if (match is null)
+        {
+            match = _allSources.FirstOrDefault(w => w.Title == profile.SourceTitle);
+            if (match is not null) ShowToast(L.Get("ProfileMissing"));
+        }
+
+        if (match is null)
+        {
+            ShowToast(L.Get("MsgPickFirst"));
+            return;
+        }
+
+        _suppressUiEvents = true;
+        (profile.Fps switch { 15 => Fps15, 60 => Fps60, 120 => Fps120, _ => Fps30 }).IsChecked = true;
+        (profile.ScaleMode switch { "Fill" => ScaleFill, "Stretch" => ScaleStretch, _ => ScaleFit }).IsChecked = true;
+        ModeRegion.IsChecked = profile.UseRegion;
+        ModeFull.IsChecked = !profile.UseRegion;
+        _suppressUiEvents = false;
+
+        _pendingRegion = profile.UseRegion && profile.RegionWidth > 0
+            ? RegionMath.Scale(
+                new PixelRect(profile.RegionX, profile.RegionY, profile.RegionWidth, profile.RegionHeight),
+                profile.RegionSourceWidth > 0 ? profile.RegionSourceWidth : match.Width,
+                profile.RegionSourceHeight > 0 ? profile.RegionSourceHeight : match.Height,
+                match.Width, match.Height)
+            : null;
+
+        UpdateRegionUi();
+        _applyingProfile = true;
+        try
+        {
+            var same = _selected?.Key == match.Key;
+            SourceList.SelectedItem = match;
+            SourceList.ScrollIntoView(match);
+            if (same && _selected is not null)
+            {
+                SelectedTitle.Text = match.Title;
+                StartPreview();
+            }
+        }
+        finally
+        {
+            _applyingProfile = false;
+        }
+    }
 
     private void OnLanguageClick(object sender, RoutedEventArgs e)
     {

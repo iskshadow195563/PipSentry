@@ -120,6 +120,7 @@ public partial class MonitorWindow : Window
         _controller.FrameReady += OnFrame;
         _controller.StateChanged += OnStateChanged;
         _controller.SourceSizeChanged += OnSourceSize;
+        _controller.BlankDetected += () => App.Toast(L.Get("MsgBlankScreen"));
         _controller.Start(_source, _region, settings.Fps);
         _controller.SetCaptureCursor(settings.CaptureCursor);
         UpdateOutputSize();
@@ -145,13 +146,15 @@ public partial class MonitorWindow : Window
         if (IsVisible)
         {
             _statsTimer.Start();
-            _controller?.Resume();
+            if (_controller is null) StartCapture(App.Settings);
+            else _controller.Resume();
             UpdateOutputSize();
         }
         else
         {
             _statsTimer.Stop();
-            _controller?.Pause();
+            if (App.Settings.StopWhenHidden) StopCapture();
+            else _controller?.Pause();
         }
     }
 
@@ -422,6 +425,7 @@ public partial class MonitorWindow : Window
         Add(Topmost ? L.Get("MenuTopmostOff") : L.Get("MenuTopmostOn"), () => OnToggleTopmost(this, new RoutedEventArgs()));
         Add(_clickThrough ? L.Get("MenuClickThroughOff") : L.Get("MenuClickThrough"), () => SetClickThrough(!_clickThrough));
         Add(App.Settings.CaptureCursor ? L.Get("MenuHideCursor") : L.Get("MenuShowCursor"), ToggleCursorCapture);
+        Add((App.Settings.StopWhenHidden ? "✓ " : "   ") + L.Get("MenuStopWhenHidden"), ToggleStopWhenHidden);
         menu.Items.Add(new System.Windows.Controls.Separator());
         Add(L.Get("ScaleFit"), () => ApplyScaleMode("Fit"));
         Add(L.Get("ScaleFill"), () => ApplyScaleMode("Fill"));
@@ -501,6 +505,13 @@ public partial class MonitorWindow : Window
         Width = Math.Max(MinWidth, width);
         Height = Math.Max(MinHeight, height);
         SnapToCorner("C");
+    }
+
+    public void ToggleStopWhenHidden()
+    {
+        App.Settings.StopWhenHidden = !App.Settings.StopWhenHidden;
+        SettingsStore.Save(App.Settings);
+        App.Toast(App.Settings.StopWhenHidden ? L.Get("MenuStopWhenHidden") : L.Get("MenuStopWhenHiddenOff"));
     }
 
     public void ToggleCursorCapture()

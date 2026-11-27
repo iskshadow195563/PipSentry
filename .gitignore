@@ -16,7 +16,7 @@ packaging/.wix/
 .tmp/
 .perf/
 .commitmsg
-.release-notes.md
+.release-notes*.md
 .release/
 
 # Logs

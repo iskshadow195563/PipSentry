@@ -29,12 +29,15 @@ public sealed class AppSettings
     public bool ShowBorder { get; set; } = true;
     public bool LockAspect { get; set; } = true;
     public bool CaptureCursor { get; set; }
+    public bool StopWhenHidden { get; set; }
 
     public bool KeepAlive { get; set; } = true;
     public bool PreventSleep { get; set; } = true;
     public bool OptimizeTargetApp { get; set; }
     public bool NudgeTarget { get; set; }
 
+
+    public System.Collections.Generic.List<MonitorProfile> Profiles { get; set; } = new();
 
     public bool HasMonitorBounds { get; set; }
     public double MonitorLeft { get; set; }
@@ -63,6 +66,22 @@ public sealed class AppSettings
             RegionX = RegionY = RegionWidth = RegionHeight = 0;
         }
     }
+}
+
+public sealed class MonitorProfile
+{
+    public string Name { get; set; } = string.Empty;
+    public string SourceKey { get; set; } = string.Empty;
+    public string SourceTitle { get; set; } = string.Empty;
+    public bool UseRegion { get; set; }
+    public int RegionX { get; set; }
+    public int RegionY { get; set; }
+    public int RegionWidth { get; set; }
+    public int RegionHeight { get; set; }
+    public int RegionSourceWidth { get; set; }
+    public int RegionSourceHeight { get; set; }
+    public int Fps { get; set; } = 30;
+    public string ScaleMode { get; set; } = "Fit";
 }
 
 public static class SettingsStore

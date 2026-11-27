@@ -14,7 +14,7 @@ Windows 視窗監控小工具。把某個視窗（或螢幕）的一塊畫面釘
 
 ## 需求
 
-Windows 10 1903 以上、Windows 11，x64。不用另外裝 .NET。
+Windows 10 2004（19041）以上、Windows 11，x64。不用另外裝 .NET。
 
 ## 用法
 
@@ -39,7 +39,8 @@ Windows 10 1903 以上、Windows 11，x64。不用另外裝 .NET。
 
 ## 限制
 
-- 獨佔全螢幕抓不到，請用無邊框視窗
+- **獨佔全螢幕抓不到**：這種模式遊戲直接輸出到螢幕、繞過 DWM，而擷取讀的是 DWM 合成結果，所以沒有畫面可拿。請改用無邊框視窗，或對遊戲 exe → 內容 → 相容性 → 勾「停用全螢幕最佳化」。
+- **防截圖**：部分遊戲會設 `WDA_EXCLUDEFROMCAPTURE`，無邊框也一樣黑。程式偵測到連續黑畫面會提示一次，但不會去繞過它。
 - 最小化的視窗抓不到
 - 有些程式自己畫在子視窗上（例如部分 Android 模擬器），會是黑畫面
 - 抓需要管理員權限的視窗時，PipSentry 也要用同樣權限開
@@ -110,6 +111,14 @@ PipSentry.exe --grab out.png --scale 560x315 --region 1200,600,960,540
 ```
 
 需要 .NET 8 SDK；打包 MSI 另外需要 WiX 5。輸出在 `dist/`。
+
+測試：
+
+```powershell
+dotnet test tests/PipSentry.Tests/PipSentry.Tests.csproj -c Release
+```
+
+CI 在 `.github/workflows/build.yml`：push 到 main 時建置、跑測試、產出免安裝 exe 與 MSI。
 
 ## 授權
 

@@ -138,4 +138,17 @@
   <sys:String x:Key="MsgDesktopCapture">Desktop capture</sys:String>
   <sys:String x:Key="MsgUnknownError">Unknown error</sys:String>
 
+  <sys:String x:Key="MonitorWindowTitle">PipSentry Monitor</sys:String>
+  <sys:String x:Key="MsgBlankScreen">Capture is black: the app may block capture or bypass DWM</sys:String>
+  <sys:String x:Key="MenuStopWhenHidden">Stop capture when hidden</sys:String>
+  <sys:String x:Key="MenuStopWhenHiddenOff">Keep session alive when hidden</sys:String>
+  <sys:String x:Key="AutostartTitle">Start with Windows</sys:String>
+  <sys:String x:Key="AutostartSub">Run in the tray after sign-in</sys:String>
+
+  <sys:String x:Key="ProfileMenu">Presets</sys:String>
+  <sys:String x:Key="ProfileSave">Save current setup</sys:String>
+  <sys:String x:Key="ProfileEmpty">(no presets yet)</sys:String>
+  <sys:String x:Key="ProfileDeleteAll">Clear all presets</sys:String>
+  <sys:String x:Key="ProfileMissing">Original window not found, matched by title</sys:String>
+
 </ResourceDictionary>

@@ -35,6 +35,14 @@ public static class WindowEffects
         }
     }
 
+    public static void BringToFront(Window window)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        if (handle == IntPtr.Zero) return;
+        window.Activate();
+        Native.SetForegroundWindow(handle);
+    }
+
     public static void SetTopmost(Window window, bool topmost)
     {
         var handle = new WindowInteropHelper(window).Handle;

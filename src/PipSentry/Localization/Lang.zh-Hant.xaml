@@ -138,4 +138,17 @@
   <sys:String x:Key="MsgDesktopCapture">桌面擷取</sys:String>
   <sys:String x:Key="MsgUnknownError">未知錯誤</sys:String>
 
+  <sys:String x:Key="MonitorWindowTitle">PipSentry 監控</sys:String>
+  <sys:String x:Key="MsgBlankScreen">畫面全黑：可能是該程式啟用防截圖，或畫面未經 DWM 合成</sys:String>
+  <sys:String x:Key="MenuStopWhenHidden">隱藏時停止擷取</sys:String>
+  <sys:String x:Key="MenuStopWhenHiddenOff">隱藏時保持連線</sys:String>
+  <sys:String x:Key="AutostartTitle">開機自動啟動</sys:String>
+  <sys:String x:Key="AutostartSub">登入後常駐托盤</sys:String>
+
+  <sys:String x:Key="ProfileMenu">預設組合</sys:String>
+  <sys:String x:Key="ProfileSave">儲存目前設定</sys:String>
+  <sys:String x:Key="ProfileEmpty">（尚無預設）</sys:String>
+  <sys:String x:Key="ProfileDeleteAll">清除所有預設</sys:String>
+  <sys:String x:Key="ProfileMissing">找不到原本的視窗，已改用同名視窗</sys:String>
+
 </ResourceDictionary>

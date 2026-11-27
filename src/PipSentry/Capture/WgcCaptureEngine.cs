@@ -49,6 +49,7 @@ public sealed class WgcCaptureEngine : ICaptureEngine
     private int _outputWidth;
     private int _outputHeight;
     private GpuScaler? _scaler;
+    private readonly System.Collections.Generic.Stack<CapturedFrame> _framePool = new();
     private bool _disposed;
 
     public event Action<CapturedFrame>? FrameReady;
@@ -172,7 +173,7 @@ public sealed class WgcCaptureEngine : ICaptureEngine
         {
             if (_disposed) return;
 
-            var (outWidth, outHeight) = FitOutput(region.Width, region.Height);
+            var (outWidth, outHeight) = CaptureMath.FitOutput(region.Width, region.Height, _outputWidth, _outputHeight);
             if (outWidth != region.Width || outHeight != region.Height)
             {
                 _scaler ??= new GpuScaler(_d3d);
@@ -181,7 +182,7 @@ public sealed class WgcCaptureEngine : ICaptureEngine
                     var scaledStride = outWidth * 4;
                     var scaledBuffer = _buffers.Rent(scaledStride * outHeight);
                     _scaler.CopyTo(scaledBuffer, outWidth, outHeight);
-                    FrameReady?.Invoke(new CapturedFrame(scaledBuffer, outWidth, outHeight, Stopwatch.GetTimestamp(), _buffers.Return));
+                    FrameReady?.Invoke(RentFrame(scaledBuffer, outWidth, outHeight));
                     return;
                 }
             }
@@ -209,7 +210,7 @@ public sealed class WgcCaptureEngine : ICaptureEngine
                 context.UnmapSubresource(_staging, 0);
             }
 
-            FrameReady?.Invoke(new CapturedFrame(buffer, outWidth, outHeight, Stopwatch.GetTimestamp(), _buffers.Return));
+            FrameReady?.Invoke(RentFrame(buffer, outWidth, outHeight));
         }
 
         var content = frame.ContentSize;
@@ -254,13 +255,24 @@ public sealed class WgcCaptureEngine : ICaptureEngine
         });
     }
 
-    private (int Width, int Height) FitOutput(int sourceWidth, int sourceHeight)
+    private CapturedFrame RentFrame(byte[] buffer, int width, int height)
     {
-        if (_outputWidth <= 0 || _outputHeight <= 0) return (sourceWidth, sourceHeight);
-        if (sourceWidth <= _outputWidth && sourceHeight <= _outputHeight) return (sourceWidth, sourceHeight);
+        CapturedFrame frame;
+        lock (_framePool)
+        {
+            frame = _framePool.Count > 0 ? _framePool.Pop() : new CapturedFrame();
+        }
 
-        var scale = Math.Min((double)_outputWidth / sourceWidth, (double)_outputHeight / sourceHeight);
-        return (Math.Max(1, (int)Math.Round(sourceWidth * scale)), Math.Max(1, (int)Math.Round(sourceHeight * scale)));
+        frame.Init(buffer, width, height, Stopwatch.GetTimestamp(), _buffers.Return, ReturnFrame);
+        return frame;
+    }
+
+    private void ReturnFrame(CapturedFrame frame)
+    {
+        lock (_framePool)
+        {
+            if (_framePool.Count < 4) _framePool.Push(frame);
+        }
     }
 
     public void Dispose()

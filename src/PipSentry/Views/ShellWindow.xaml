@@ -42,6 +42,9 @@
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
+          <Button x:Name="ProfileButton" Style="{StaticResource IconBtn}" Tag="{StaticResource IcoPin}"
+                  Click="OnProfileClick" ToolTip="{DynamicResource ProfileMenu}"
+                  shell:WindowChrome.IsHitTestVisibleInChrome="True" Margin="0,0,2,0" />
           <Button x:Name="LanguageButton" Style="{StaticResource IconBtn}" Tag="{StaticResource IcoGlobe}"
                   Click="OnLanguageClick" ToolTip="{DynamicResource LanguageTip}"
                   shell:WindowChrome.IsHitTestVisibleInChrome="True" Margin="0,0,2,0" />

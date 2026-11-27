@@ -12,6 +12,7 @@ public sealed class TrayService : IDisposable
     private readonly Forms.ToolStripMenuItem _openItem;
     private readonly Forms.ToolStripMenuItem _monitorItem;
     private readonly Forms.ToolStripMenuItem _pauseItem;
+    private readonly Forms.ToolStripMenuItem _startItem;
     private readonly Forms.ToolStripMenuItem _exitItem;
     private bool _paused;
     private bool _disposed;
@@ -20,6 +21,7 @@ public sealed class TrayService : IDisposable
     public event Action? ShowMonitorRequested;
     public event Action? PauseToggleRequested;
     public event Action? ExitRequested;
+    public event Action<bool>? AutostartToggled;
 
     public TrayService()
     {
@@ -41,6 +43,13 @@ public sealed class TrayService : IDisposable
         _pauseItem = new Forms.ToolStripMenuItem(L.Get("MenuPause"));
         _pauseItem.Click += (_, _) => PauseToggleRequested?.Invoke();
 
+        _startItem = new Forms.ToolStripMenuItem(L.Get("AutostartTitle"))
+        {
+            CheckOnClick = true,
+            Checked = AutostartService.IsEnabled,
+        };
+        _startItem.CheckedChanged += (_, _) => AutostartToggled?.Invoke(_startItem.Checked);
+
         _exitItem = new Forms.ToolStripMenuItem(L.Get("TrayExit"));
         _exitItem.Click += (_, _) => ExitRequested?.Invoke();
 
@@ -48,6 +57,8 @@ public sealed class TrayService : IDisposable
         menu.Items.Add(_monitorItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_pauseItem);
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add(_startItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_exitItem);
 
@@ -65,6 +76,8 @@ public sealed class TrayService : IDisposable
         _icon.Text = L.Get("TrayTip");
         _openItem.Text = L.Get("TrayOpen");
         _monitorItem.Text = L.Get("TrayShowMonitor");
+        _startItem.Text = L.Get("AutostartTitle");
+        _startItem.Checked = AutostartService.IsEnabled;
         _exitItem.Text = L.Get("TrayExit");
         _pauseItem.Text = L.Get(_paused ? "MenuResume" : "MenuPause");
     }

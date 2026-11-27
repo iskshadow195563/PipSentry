@@ -24,12 +24,15 @@ public sealed class CaptureController : IDisposable
     private volatile bool _disposed;
     private int _pendingFrames;
     private bool _fallbackAttempted;
+    private int _blankStreak;
+    private bool _blankReported;
 
     public CaptureController(Dispatcher dispatcher) => _dispatcher = dispatcher;
 
     public event Action<CapturedFrame>? FrameReady;
     public event Action<CaptureState, string?>? StateChanged;
     public event Action<int, int>? SourceSizeChanged;
+    public event Action? BlankDetected;
 
     public CaptureState State { get; private set; } = CaptureState.Idle;
     public bool CompatibilityMode { get; private set; }
@@ -44,6 +47,8 @@ public sealed class CaptureController : IDisposable
         Stop();
         Source = source;
         _fallbackAttempted = false;
+        _blankStreak = 0;
+        _blankReported = false;
 
         var wgc = new WgcCaptureEngine();
         try
@@ -74,6 +79,32 @@ public sealed class CaptureController : IDisposable
         engine.SourceClosed += OnSourceClosed;
         engine.SourceSizeChanged += OnSourceSizeChanged;
         engine.Start(source, region, fps);
+    }
+
+    /// <summary>Samples a small grid; the frame counts as blank when almost every sample is near black.</summary>
+    private static bool LooksBlank(CapturedFrame frame)
+    {
+        if (frame.Width < 8 || frame.Height < 8) return false;
+
+        var buffer = frame.Buffer;
+        var stride = frame.Stride;
+        var dark = 0;
+        var samples = 0;
+
+        for (var gy = 1; gy <= 4; gy++)
+        {
+            var y = frame.Height * gy / 5;
+            for (var gx = 1; gx <= 6; gx++)
+            {
+                var x = frame.Width * gx / 7;
+                var offset = (y * stride) + (x * 4);
+                if (offset + 3 >= buffer.Length) continue;
+                samples++;
+                if (buffer[offset] <= 8 && buffer[offset + 1] <= 8 && buffer[offset + 2] <= 8) dark++;
+            }
+        }
+
+        return samples > 0 && dark >= samples * 9 / 10;
     }
 
     private void OnSourceSizeChanged(int width, int height)
@@ -108,6 +139,19 @@ public sealed class CaptureController : IDisposable
                 Interlocked.Increment(ref DeliveredFrames);
                 try
                 {
+                    if (!_blankReported && LooksBlank(frame))
+                    {
+                        if (++_blankStreak >= 30)
+                        {
+                            _blankReported = true;
+                            BlankDetected?.Invoke();
+                        }
+                    }
+                    else if (_blankStreak > 0)
+                    {
+                        _blankStreak = 0;
+                    }
+
                     FrameReady?.Invoke(frame);
                 }
                 finally

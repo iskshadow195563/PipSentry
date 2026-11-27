@@ -16,6 +16,9 @@ namespace PipSentry;
 public partial class App : Application
 {
     private static Mutex? _instanceMutex;
+    private static EventWaitHandle? _activateSignal;
+    private static DateTime _lastToastAt;
+    private static string _lastToastText = string.Empty;
     private static bool _isExiting;
     private static int _hotkeyToggle;
     private static int _hotkeyPause;
@@ -56,7 +59,8 @@ public partial class App : Application
             Loc.Apply(Settings.Language);
             ThemeManager.Apply(Settings.Theme);
             RunBench(benchPath!, GetArg(e.Args, "--fps"), GetArg(e.Args, "--region"),
-                GetArg(e.Args, "--scale"), e.Args.Contains("--paused"), GetArg(e.Args, "--seconds"));
+                GetArg(e.Args, "--scale"), e.Args.Contains("--paused"), GetArg(e.Args, "--seconds"),
+                e.Args.Contains("--warmup"));
             Current.Shutdown();
             return;
         }
@@ -74,12 +78,36 @@ public partial class App : Application
             return;
         }
 
-        _instanceMutex = new Mutex(true, @"Global\PipSentry.SingleInstance", out var created);
+        _instanceMutex = new Mutex(true, @"Local\PipSentry.SingleInstance", out var created);
         if (!created)
         {
+            try
+            {
+                using var signal = EventWaitHandle.OpenExisting(@"Local\PipSentry.Activate");
+                signal.Set();
+            }
+            catch (Exception)
+            {
+            }
+
             Shutdown();
             return;
         }
+
+        _activateSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\PipSentry.Activate");
+        var activateThread = new Thread(() =>
+        {
+            while (true)
+            {
+                _activateSignal.WaitOne();
+                Current.Dispatcher.BeginInvoke(new Action(ActivateExisting));
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "PipSentry activate listener",
+        };
+        activateThread.Start();
 
         Settings = SettingsStore.Load();
         if (string.IsNullOrWhiteSpace(Settings.Language)) Settings.Language = Loc.DetectSystem();
@@ -118,6 +146,7 @@ public partial class App : Application
         Tray.ShowShellRequested += ShowShell;
         Tray.ShowMonitorRequested += ToggleMonitorVisibility;
         Tray.PauseToggleRequested += () => Monitor?.TogglePause();
+        Tray.AutostartToggled += enabled => AutostartService.SetEnabled(enabled);
         Tray.ExitRequested += ShutdownApp;
     }
 
@@ -205,9 +234,27 @@ public partial class App : Application
 
     public static void Toast(string message)
     {
+        var now = DateTime.UtcNow;
+        if (message == _lastToastText && (now - _lastToastAt).TotalSeconds < 3) return;
+        _lastToastText = message;
+        _lastToastAt = now;
+
         Shell?.ShowToast(message);
-        Tray?.Notify("PipSentry", message);
+        if (Shell is not { IsVisible: true }) Tray?.Notify("PipSentry", message);
         AppLog.Write("toast: " + message);
+    }
+
+    private static void ActivateExisting()
+    {
+        if (Monitor is { IsVisible: true } monitor)
+        {
+            monitor.Show();
+            WindowEffects.BringToFront(monitor);
+            return;
+        }
+
+        ShowShell();
+        if (Shell is not null) WindowEffects.BringToFront(Shell);
     }
 
     private static string? GetArg(string[] args, string name)
@@ -271,7 +318,7 @@ public partial class App : Application
     }
 
     private static void RunBench(string outputPath, string? fpsArg, string? regionArg, string? scaleArg, bool startPaused,
-        string? secondsArg)
+        string? secondsArg, bool warmupEnabled)
     {
         var seconds = double.TryParse(secondsArg, out var parsedSeconds) && parsedSeconds >= 2 ? parsedSeconds : 10;
         var targetFps = int.TryParse(fpsArg, out var parsedFps) ? parsedFps : 60;
@@ -324,6 +371,23 @@ public partial class App : Application
         }
 
         if (startPaused) controller.Pause();
+
+        // Optional warm-up so D2D/WGC start-up cost does not land in the sample.
+        if (warmupEnabled)
+        {
+            var warmup = new DispatcherFrame();
+            var warmupTimer = new DispatcherTimer(TimeSpan.FromSeconds(1), DispatcherPriority.Background,
+                (_, _) => warmup.Continue = false, Current.Dispatcher);
+            warmupTimer.Start();
+            Dispatcher.PushFrame(warmup);
+
+            frames = 0;
+            bytes = 0;
+            process.Refresh();
+            cpuBefore = process.TotalProcessorTime;
+            memoryBefore = process.WorkingSet64;
+            started = DateTime.UtcNow;
+        }
 
         var pump = new DispatcherFrame();
         var timer = new DispatcherTimer(TimeSpan.FromSeconds(seconds), DispatcherPriority.Background,
