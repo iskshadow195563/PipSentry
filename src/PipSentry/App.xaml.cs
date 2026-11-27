@@ -206,6 +206,9 @@ public partial class App : Application
             System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(content);
 
+        var directory = System.IO.Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory)) System.IO.Directory.CreateDirectory(directory);
+
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
         encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
         using var stream = System.IO.File.Create(path);
@@ -224,11 +227,20 @@ public partial class App : Application
 
     public static void ToggleTheme()
     {
-        Settings.Theme = ThemeManager.IsDark ? "Light" : "Dark";
-        ThemeManager.Apply(Settings.Theme);
+        var next = ThemeManager.IsDark ? "Light" : "Dark";
+        Settings.Theme = next;
+
+        void Apply()
+        {
+            ThemeManager.Apply(next);
+            Shell?.RefreshThemeIcon();
+            Shell?.ApplyChromeForTheme();
+        }
+
+        if (Shell is { IsVisible: true } shell) shell.RunThemeTransition(Apply);
+        else Apply();
+
         SettingsStore.Save(Settings);
-        Shell?.RefreshThemeIcon();
-        Shell?.ApplyChromeForTheme();
     }
 
     public static void ShutdownApp()

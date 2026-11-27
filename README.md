@@ -25,7 +25,7 @@
 - **滑鼠指標**：可選擇在監控畫面中顯示來源視窗的游標（預設關閉）。
 - **背景持續更新**：擷取工作階段會讓 DWM 持續合成來源視窗，降低遊戲轉背景後被降頻、停止更新的機率；另可防止系統／螢幕休眠、關閉 Windows 的「視窗化遊戲最佳化」。
 - **鍵盤快捷鍵**：隨時顯示／隱藏、暫停、截圖、回到設定。
-- **深色／淺色主題**：右上角一鍵切換，設定會記住；監控視窗永遠維持深色，避免淺色邊框干擾遊戲畫面。
+- **深色／淺色主題**：右上角一鍵切換，切換時整個視窗以 280ms 交叉淡入（不是硬切），設定會記住；監控視窗永遠維持深色，避免淺色邊框干擾遊戲畫面。
 - **多語系（i18n）**：繁體中文 / 简体中文 / English，右上角地球按鈕即時切換、即時套用；首次啟動依系統語言自動選擇，選擇會寫入設定。字串集中於 `src/PipSentry/Localization/Lang.*.xaml`，新增語言只需複製一份並翻譯。
 - **高 DPI 原生支援**：Per-Monitor V2，在 4K 150% / 200% 縮放下仍然清晰。
 - **兩種發佈形式**：免安裝單檔 exe，以及標準 MSI 安裝檔（含開始功能表／桌面捷徑、解除安裝項目）。
@@ -137,7 +137,7 @@ dotnet tool install --tool-path .tools/wix wix --version "5.*"
 .tools/wix/wix.exe extension add WixToolset.UI.wixext
 cd packaging
 ../.tools/wix/wix.exe build -arch x64 -ext WixToolset.UI.wixext PipSentry.wxs `
-  -o ../dist/PipSentry-1.1.0-x64.msi
+  -o ../dist/PipSentry-1.1.1-x64.msi
 ```
 
 或直接執行 `./build.ps1`（一次產生兩種格式）。

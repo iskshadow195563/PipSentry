@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using PipSentry.Platform;
@@ -443,6 +444,57 @@ public partial class ShellWindow : Window
     }
 
     public void ApplyChromeForTheme() => WindowEffects.ApplyDarkChrome(this, ThemeManager.IsDark);
+
+    /// <summary>
+    /// Cross-fades the whole window while the palette is swapped, so switching
+    /// themes looks like a dissolve instead of a hard cut.
+    /// </summary>
+    public void RunThemeTransition(Action apply)
+    {
+        try
+        {
+            var root = (FrameworkElement)Content;
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var width = (int)Math.Round(root.ActualWidth * dpi.DpiScaleX);
+            var height = (int)Math.Round(root.ActualHeight * dpi.DpiScaleY);
+
+            if (width < 64 || height < 64 || !IsVisible)
+            {
+                apply();
+                return;
+            }
+
+            var snapshot = new RenderTargetBitmap(width, height, 96 * dpi.DpiScaleX, 96 * dpi.DpiScaleY, PixelFormats.Pbgra32);
+            snapshot.Render(root);
+            snapshot.Freeze();
+
+            ThemeOverlay.BeginAnimation(OpacityProperty, null);
+            ThemeOverlay.Source = snapshot;
+            ThemeOverlay.Opacity = 1;
+            ThemeOverlay.Visibility = Visibility.Visible;
+
+            apply();
+
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            {
+                var fade = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromMilliseconds(280)))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
+                };
+                fade.Completed += (_, _) =>
+                {
+                    ThemeOverlay.Visibility = Visibility.Collapsed;
+                    ThemeOverlay.Source = null;
+                };
+                ThemeOverlay.BeginAnimation(OpacityProperty, fade);
+            }));
+        }
+        catch
+        {
+            apply();
+            ThemeOverlay.Visibility = Visibility.Collapsed;
+        }
+    }
 
     private void OnCloseWindow(object sender, RoutedEventArgs e) => App.ShutdownApp();
 
