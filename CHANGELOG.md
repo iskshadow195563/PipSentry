@@ -4,6 +4,11 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.4.1 - 2026-11-28
+
+Fixed
+- The hotkey recorder ignored Alt combinations: Alt arrives as `Key.System`, so the recorded key was dropped. It now reads `SystemKey`.
+
 ## 1.4.0 - 2026-11-28
 
 Added

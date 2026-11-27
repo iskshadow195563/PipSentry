@@ -107,16 +107,18 @@ public partial class HotkeyWindow : Window
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_recording is null || e.Key == Key.System) return;
+        if (_recording is null) return;
 
-        if (e.Key == Key.Escape)
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Escape)
         {
             EndRecording();
             e.Handled = true;
             return;
         }
 
-        if (HotkeyBinding.IsModifierKey(e.Key))
+        if (HotkeyBinding.IsModifierKey(key))
         {
             e.Handled = true;
             return;
@@ -129,7 +131,7 @@ public partial class HotkeyWindow : Window
             return;
         }
 
-        var text = HotkeyBinding.Format(modifiers, e.Key);
+        var text = HotkeyBinding.Format(modifiers, key);
         _recording.Set(text);
         _recording.Value.Text = text;
         EndRecording();
