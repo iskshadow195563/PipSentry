@@ -1,6 +1,0 @@
-feat(ui): cross-fade theme switching
-
-- Snapshot the window content, swap the palette, then fade the snapshot out over 280ms (CubicEase)
-- Falls back to an instant swap when the window is hidden or too small
-- Harden --render mode: create the target directory before writing
-- Bump version to 1.1.1

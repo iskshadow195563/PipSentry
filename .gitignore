@@ -12,9 +12,14 @@ sdk/
 # WiX extension cache
 packaging/.wix/
 
-# Logs & temp
-*.log
+# Scratch files
 .tmp/
+.commitmsg
+.release-notes.md
+.release/
+
+# Logs
+*.log
 
 # OS / IDE
 Thumbs.db
