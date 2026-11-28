@@ -4,6 +4,15 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.6.0 - 2026-11-28
+
+Added
+- Update check against the GitHub releases API (`releases/latest`). Runs at most once every 24 hours on startup and on demand from the tray menu.
+- Update dialog: current and latest version, release notes, download progress, "open download page", "later" and "skip this version".
+- Downloads are limited to HTTPS URLs on github.com / githubusercontent.com and the file size is checked against the release asset.
+- Installed builds (Program Files) download the MSI and hand off to msiexec; portable builds hand off to a small script that waits for exit, replaces the exe and restarts it.
+- `--checkupdate` dev switch and `--render --window update`.
+
 ## 1.5.0 - 2026-11-28
 
 Added

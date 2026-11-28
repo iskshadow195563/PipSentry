@@ -31,6 +31,10 @@ public sealed class AppSettings
     public bool CaptureCursor { get; set; }
     public bool StopWhenHidden { get; set; }
 
+    public bool AutoCheckUpdates { get; set; } = true;
+    public System.DateTime? LastUpdateCheckUtc { get; set; }
+    public string SkippedUpdate { get; set; } = string.Empty;
+
     public string HotkeyToggle { get; set; } = "Ctrl+Alt+M";
     public string HotkeyPause { get; set; } = "Ctrl+Alt+P";
     public string HotkeyScreenshot { get; set; } = "Ctrl+Alt+S";

@@ -163,4 +163,20 @@
   <sys:String x:Key="HotkeyClose">Done</sys:String>
   <sys:String x:Key="MsgHotkeyBusy">Some hotkeys are taken by another app and were skipped</sys:String>
 
+  <sys:String x:Key="UpdateTitle">Software update</sys:String>
+  <sys:String x:Key="UpdateCheck">Check for updates…</sys:String>
+  <sys:String x:Key="UpdateChecking">Checking…</sys:String>
+  <sys:String x:Key="UpdateLatest">You are up to date</sys:String>
+  <sys:String x:Key="UpdateAvailable">Current {0}, latest {1}</sys:String>
+  <sys:String x:Key="UpdateDownload">Download and install</sys:String>
+  <sys:String x:Key="UpdateOpenPage">Open download page</sys:String>
+  <sys:String x:Key="UpdateLater">Later</sys:String>
+  <sys:String x:Key="UpdateSkip">Skip this version</sys:String>
+  <sys:String x:Key="UpdateDownloading">Downloading {0}%</sys:String>
+  <sys:String x:Key="UpdateReady">Downloaded. The app will close and install.</sys:String>
+  <sys:String x:Key="UpdateFailed">Update failed: {0}</sys:String>
+  <sys:String x:Key="UpdateAutoCheck">Check for updates at startup</sys:String>
+  <sys:String x:Key="UpdateSkipped">This version is skipped</sys:String>
+  <sys:String x:Key="UpdateNoAsset">No downloadable file in this release</sys:String>
+
 </ResourceDictionary>

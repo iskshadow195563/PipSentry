@@ -163,4 +163,20 @@
   <sys:String x:Key="HotkeyClose">完成</sys:String>
   <sys:String x:Key="MsgHotkeyBusy">有熱鍵被其他程式占用，已跳過</sys:String>
 
+  <sys:String x:Key="UpdateTitle">軟體更新</sys:String>
+  <sys:String x:Key="UpdateCheck">檢查更新…</sys:String>
+  <sys:String x:Key="UpdateChecking">正在檢查…</sys:String>
+  <sys:String x:Key="UpdateLatest">已是最新版本</sys:String>
+  <sys:String x:Key="UpdateAvailable">目前 {0}，最新 {1}</sys:String>
+  <sys:String x:Key="UpdateDownload">下載並安裝</sys:String>
+  <sys:String x:Key="UpdateOpenPage">開啟下載頁</sys:String>
+  <sys:String x:Key="UpdateLater">稍後</sys:String>
+  <sys:String x:Key="UpdateSkip">略過此版本</sys:String>
+  <sys:String x:Key="UpdateDownloading">下載中 {0}%</sys:String>
+  <sys:String x:Key="UpdateReady">下載完成，程式將關閉並安裝</sys:String>
+  <sys:String x:Key="UpdateFailed">更新失敗：{0}</sys:String>
+  <sys:String x:Key="UpdateAutoCheck">啟動時檢查更新</sys:String>
+  <sys:String x:Key="UpdateSkipped">已略過此版本</sys:String>
+  <sys:String x:Key="UpdateNoAsset">這個版本沒有可用的下載檔</sys:String>
+
 </ResourceDictionary>

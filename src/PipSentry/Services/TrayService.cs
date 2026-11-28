@@ -12,6 +12,8 @@ public sealed class TrayService : IDisposable
     private readonly Forms.ToolStripMenuItem _openItem;
     private readonly Forms.ToolStripMenuItem _monitorItem;
     private readonly Forms.ToolStripMenuItem _pauseItem;
+    private readonly Forms.ToolStripMenuItem _updateItem;
+    private readonly Forms.ToolStripMenuItem _autoUpdateItem;
     private readonly Forms.ToolStripMenuItem _startItem;
     private readonly Forms.ToolStripMenuItem _exitItem;
     private bool _paused;
@@ -22,6 +24,8 @@ public sealed class TrayService : IDisposable
     public event Action? PauseToggleRequested;
     public event Action? ExitRequested;
     public event Action<bool>? AutostartToggled;
+    public event Action? CheckUpdatesRequested;
+    public event Action<bool>? AutoUpdateToggled;
 
     public TrayService()
     {
@@ -43,6 +47,16 @@ public sealed class TrayService : IDisposable
         _pauseItem = new Forms.ToolStripMenuItem(L.Get("MenuPause"));
         _pauseItem.Click += (_, _) => PauseToggleRequested?.Invoke();
 
+        _updateItem = new Forms.ToolStripMenuItem(L.Get("UpdateCheck"));
+        _updateItem.Click += (_, _) => CheckUpdatesRequested?.Invoke();
+
+        _autoUpdateItem = new Forms.ToolStripMenuItem(L.Get("UpdateAutoCheck"))
+        {
+            CheckOnClick = true,
+            Checked = App.Settings.AutoCheckUpdates,
+        };
+        _autoUpdateItem.CheckedChanged += (_, _) => AutoUpdateToggled?.Invoke(_autoUpdateItem.Checked);
+
         _startItem = new Forms.ToolStripMenuItem(L.Get("AutostartTitle"))
         {
             CheckOnClick = true,
@@ -57,6 +71,8 @@ public sealed class TrayService : IDisposable
         menu.Items.Add(_monitorItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_pauseItem);
+        menu.Items.Add(_updateItem);
+        menu.Items.Add(_autoUpdateItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(_startItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -76,6 +92,9 @@ public sealed class TrayService : IDisposable
         _icon.Text = L.Get("TrayTip");
         _openItem.Text = L.Get("TrayOpen");
         _monitorItem.Text = L.Get("TrayShowMonitor");
+        _updateItem.Text = L.Get("UpdateCheck");
+        _autoUpdateItem.Text = L.Get("UpdateAutoCheck");
+        _autoUpdateItem.Checked = App.Settings.AutoCheckUpdates;
         _startItem.Text = L.Get("AutostartTitle");
         _startItem.Checked = AutostartService.IsEnabled;
         _exitItem.Text = L.Get("TrayExit");

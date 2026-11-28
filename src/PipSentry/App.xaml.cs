@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -60,6 +61,25 @@ public partial class App : Application
                 GetArg(e.Args, "--scale"), e.Args.Contains("--paused"), GetArg(e.Args, "--seconds"),
                 e.Args.Contains("--warmup"));
             Current.Shutdown();
+            return;
+        }
+
+        // Release check: PipSentry.exe --checkupdate
+        if (e.Args.Contains("--checkupdate"))
+        {
+            try
+            {
+                var release = UpdateService.CheckAsync().GetAwaiter().GetResult();
+                AppLog.Write(release is null
+                    ? "checkupdate: no release"
+                    : $"checkupdate: latest={release.Version} tag={release.Tag} assets={release.Msi?.Name ?? "-"}, {release.Portable?.Name ?? "-"}");
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write("checkupdate failed: " + ex.Message);
+            }
+
+            Shutdown();
             return;
         }
 
@@ -165,7 +185,25 @@ public partial class App : Application
         Tray.ShowMonitorRequested += ToggleMonitorVisibility;
         Tray.PauseToggleRequested += () => Monitor?.TogglePause();
         Tray.AutostartToggled += enabled => AutostartService.SetEnabled(enabled);
+        Tray.CheckUpdatesRequested += () => _ = CheckForUpdatesAsync(true);
+        Tray.AutoUpdateToggled += enabled =>
+        {
+            Settings.AutoCheckUpdates = enabled;
+            SettingsStore.Save(Settings);
+        };
         Tray.ExitRequested += ShutdownApp;
+
+        var lastCheck = Settings.LastUpdateCheckUtc;
+        if (Settings.AutoCheckUpdates && (lastCheck is null || DateTime.UtcNow - lastCheck.Value > TimeSpan.FromHours(24)))
+        {
+            var updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            updateTimer.Tick += (_, _) =>
+            {
+                updateTimer.Stop();
+                _ = CheckForUpdatesAsync(false);
+            };
+            updateTimer.Start();
+        }
     }
 
     public static bool RegisterHotkeys()
@@ -250,6 +288,50 @@ public partial class App : Application
         Monitor = null;
         if (_isExiting) return;
         ShowShell();
+    }
+
+    public static void ShowUpdateWindow(ReleaseInfo release)
+    {
+        var window = new UpdateWindow(release);
+        window.Show();
+        window.Activate();
+    }
+
+    private static async Task CheckForUpdatesAsync(bool manual)
+    {
+        try
+        {
+            Settings.LastUpdateCheckUtc = DateTime.UtcNow;
+            SettingsStore.Save(Settings);
+
+            var release = await UpdateService.CheckAsync();
+            if (release is null)
+            {
+                if (manual) Toast(L.Get("UpdateFailed").Replace("{0}", "HTTP"));
+                return;
+            }
+
+            if (!UpdateService.IsNewer(UpdateService.CurrentVersion, release.Version))
+            {
+                if (manual) Toast(L.Get("UpdateLatest"));
+                return;
+            }
+
+            if (!manual && Settings.SkippedUpdate == release.Tag) return;
+
+            ShowUpdateWindow(release);
+            if (!manual)
+            {
+                Toast(L.Format("UpdateAvailable",
+                    UpdateService.Normalize(UpdateService.CurrentVersion).ToString(3),
+                    release.Version.ToString(3)));
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write("update check failed: " + ex.Message);
+            if (manual) Toast(L.Format("UpdateFailed", ex.Message));
+        }
     }
 
     public static void ShowShell()
@@ -526,11 +608,18 @@ public partial class App : Application
 
     private static void RenderShell(string path, string? windowKind)
     {
-        Window window = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase)
-            ? new HotkeyWindow()
-            : new ShellWindow();
-        window.Width = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase) ? 560 : 1148;
-        window.Height = string.Equals(windowKind, "hotkeys", StringComparison.OrdinalIgnoreCase) ? 430 : 866;
+        Window window = windowKind?.ToLowerInvariant() switch
+        {
+            "hotkeys" => new HotkeyWindow(),
+            "update" => new UpdateWindow(new ReleaseInfo(new Version(9, 9, 9), "v9.9.9", "PipSentry 9.9.9",
+                "新增\n- 範例項目一\n- 範例項目二\n\n修正\n- 範例修正",
+                "https://github.com/iskshadow195563/PipSentry/releases",
+                new ReleaseAsset("PipSentry-9.9.9-x64.msi", "https://github.com/x.msi", 1024),
+                new ReleaseAsset("PipSentry-9.9.9-portable.exe", "https://github.com/x.exe", 1024))),
+            _ => new ShellWindow(),
+        };
+        window.Width = windowKind?.ToLowerInvariant() switch { "hotkeys" => 560, "update" => 620, _ => 1148 };
+        window.Height = windowKind?.ToLowerInvariant() switch { "hotkeys" => 430, "update" => 470, _ => 866 };
 
         var content = (FrameworkElement)window.Content;
         content.Measure(new Size(window.Width, window.Height));
