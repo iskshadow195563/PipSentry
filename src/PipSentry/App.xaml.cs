@@ -64,6 +64,49 @@ public partial class App : Application
             return;
         }
 
+        // Live screenshot: PipSentry.exe --shot <png> [--monitor]
+        if (GetArg(e.Args, "--shot") is { } shotPath)
+        {
+            try
+            {
+                if (GetArg(e.Args, "--lang") is { } shotLang && !string.IsNullOrWhiteSpace(shotLang))
+                {
+                    Settings.Language = Loc.Normalize(shotLang);
+                    Loc.Apply(Settings.Language);
+                }
+
+                var wantMonitor = e.Args.Contains("--monitor");
+                if (wantMonitor)
+                {
+                    var source = WindowCatalog.Enumerate().FirstOrDefault(w => !w.IsDisplay && !w.IsMinimized)
+                                 ?? WindowCatalog.Enumerate().FirstOrDefault(w => w.IsDisplay);
+                    if (source is not null) StartMonitoring(source);
+                }
+                else
+                {
+                    Shell = new ShellWindow();
+                    Shell.Show();
+                }
+
+                var shotFrame = new DispatcherFrame();
+                var shotTimer = new DispatcherTimer(TimeSpan.FromSeconds(3), DispatcherPriority.Background,
+                    (_, _) => shotFrame.Continue = false, Current.Dispatcher);
+                shotTimer.Start();
+                Dispatcher.PushFrame(shotFrame);
+
+                var target = wantMonitor ? (Window?)Monitor : Shell;
+                if (target is not null) SaveWindowShot(target, shotPath);
+                AppLog.Write("shot: " + shotPath);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write("shot failed: " + ex);
+            }
+
+            Shutdown();
+            return;
+        }
+
         // Headless update apply: PipSentry.exe --applylatest
         if (e.Args.Contains("--applylatest"))
         {
@@ -594,6 +637,26 @@ public partial class App : Application
 
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outputPath) ?? ".");
         System.IO.File.WriteAllText(outputPath, report.ToString());
+    }
+
+    private static void SaveWindowShot(Window window, string path)
+    {
+        var content = (FrameworkElement)window.Content;
+        content.UpdateLayout();
+
+        var width = Math.Max(1, (int)Math.Ceiling(content.ActualWidth));
+        var height = Math.Max(1, (int)Math.Ceiling(content.ActualHeight));
+        const double dpi = 1.5;
+
+        var bitmap = new RenderTargetBitmap((int)(width * dpi), (int)(height * dpi), 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
+        bitmap.Render(content);
+
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        var directory = System.IO.Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory)) System.IO.Directory.CreateDirectory(directory);
+        using var stream = System.IO.File.Create(path);
+        encoder.Save(stream);
     }
 
     private static void RunThumbTest(string path)
