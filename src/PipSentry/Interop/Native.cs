@@ -163,6 +163,9 @@ internal static class Native
     public static extern bool SetForegroundWindow(IntPtr hWnd);
 
     [DllImport("user32.dll")]
+    public static extern bool GetWindowRect(IntPtr hWnd, out RECT rect);
+
+    [DllImport("user32.dll")]
     public static extern bool InvalidateRect(IntPtr hWnd, IntPtr rect, bool erase);
 
     [DllImport("user32.dll")]

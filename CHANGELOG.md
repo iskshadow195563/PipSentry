@@ -4,6 +4,14 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.4.2 - 2026-11-28
+
+Fixed
+- Dragging the overlay could throw `InvalidOperationException` ("Can only call DragMove when primary mouse button is down") on synthetic clicks and showed an error toast. The drag now checks the button state and ignores that case.
+
+Internal
+- `--thumbtest` probe for the DWM thumbnail experiment (`ScreenGrab`, `ThumbTestWindow`).
+
 ## 1.4.1 - 2026-11-28
 
 Fixed

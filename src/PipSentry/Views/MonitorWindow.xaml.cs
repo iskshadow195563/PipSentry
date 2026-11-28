@@ -40,7 +40,18 @@ public partial class MonitorWindow : Window
         MouseEnter += (_, _) => ShowToolbar(true);
         MouseLeave += (_, _) => ShowToolbar(false);
         MouseRightButtonUp += OnContextMenuRequest;
-        MouseLeftButtonDown += (_, _) => { if (!_clickThrough) DragMove(); };
+        MouseLeftButtonDown += (_, e) =>
+        {
+            if (_clickThrough || e.ButtonState != MouseButtonState.Pressed) return;
+            try
+            {
+                DragMove();
+            }
+            catch (InvalidOperationException)
+            {
+                // A synthetic click can land here without the button held down.
+            }
+        };
         Closed += OnClosedInternal;
         Loaded += (_, _) => ShowToolbar(false);
         SizeChanged += (_, _) => UpdateOutputSize();

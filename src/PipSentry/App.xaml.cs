@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Windows.Input;
@@ -59,6 +60,23 @@ public partial class App : Application
                 GetArg(e.Args, "--scale"), e.Args.Contains("--paused"), GetArg(e.Args, "--seconds"),
                 e.Args.Contains("--warmup"));
             Current.Shutdown();
+            return;
+        }
+
+        // DWM thumbnail probe: PipSentry.exe --thumbtest <png>
+        var thumbPath = GetArg(e.Args, "--thumbtest");
+        if (thumbPath is not null)
+        {
+            try
+            {
+                RunThumbTest(thumbPath);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write("thumbtest failed: " + ex);
+            }
+
+            Shutdown();
             return;
         }
 
@@ -456,6 +474,54 @@ public partial class App : Application
 
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outputPath) ?? ".");
         System.IO.File.WriteAllText(outputPath, report.ToString());
+    }
+
+    private static void RunThumbTest(string path)
+    {
+        var source = WindowCatalog.Enumerate()
+            .Where(w => !w.IsDisplay && !w.IsMinimized && w.ProcessId != (uint)Environment.ProcessId && w.Width > 400)
+            .OrderByDescending(w => (long)w.Width * w.Height)
+            .FirstOrDefault();
+
+        if (source is null)
+        {
+            AppLog.Write("thumbtest: no source window");
+            return;
+        }
+
+        var window = new ThumbTestWindow(source.Handle);
+        window.Show();
+
+        var frame = new DispatcherFrame();
+        var timer = new DispatcherTimer(TimeSpan.FromSeconds(1.5), DispatcherPriority.Background,
+            (_, _) => frame.Continue = false, Current.Dispatcher);
+        timer.Start();
+        Dispatcher.PushFrame(frame);
+
+        // Place it over the desktop with physical pixels so the capture rect is exact.
+        PipSentry.Interop.Native.SetWindowPos(window.Handle, IntPtr.Zero, 2200, 1350, 780, 450, 0x0010);
+        window.FillClient();
+
+        PipSentry.Interop.Native.GetWindowRect(window.Handle, out var rect);
+        var width = rect.Right - rect.Left;
+        var height = rect.Bottom - rect.Top;
+        var left = rect.Left;
+        var top = rect.Top;
+
+        var pixels = ScreenGrab.Capture(left, top, width, height, out var stride);
+        if (pixels.Length > 0)
+        {
+            var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(bitmap));
+            var directory = System.IO.Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory)) System.IO.Directory.CreateDirectory(directory);
+            using var stream = System.IO.File.Create(path);
+            encoder.Save(stream);
+        }
+
+        AppLog.Write($"thumbtest: registered={window.Registered} source={source.Title} {source.Width}x{source.Height}");
+        window.Close();
     }
 
     private static void RenderShell(string path, string? windowKind)
