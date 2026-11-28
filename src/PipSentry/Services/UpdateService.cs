@@ -129,6 +129,46 @@ public static class UpdateService
         return targetPath;
     }
 
+    /// <summary>Starts the installer for the downloaded file. Returns false when nothing could be started.</summary>
+    public static bool LaunchInstaller(string file, bool isMsi)
+    {
+        if (isMsi)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("msiexec.exe", "/i \"" + file + "\"")
+            {
+                UseShellExecute = true,
+            });
+            return true;
+        }
+
+        var target = Environment.ProcessPath;
+        if (string.IsNullOrEmpty(target)) return false;
+
+        var script = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "PipSentry-update.cmd");
+        var pid = Environment.ProcessId;
+        var lines = new[]
+        {
+            "@echo off",
+            ":wait",
+            "tasklist /FI \"PID eq " + pid + "\" 2>nul | find \"" + pid + "\" >nul",
+            "if not errorlevel 1 (",
+            "  timeout /t 1 /nobreak >nul",
+            "  goto wait",
+            ")",
+            "copy /Y \"" + file + "\" \"" + target + "\" >nul",
+            "start \"\" \"" + target + "\"",
+            "del \"%~f0\"",
+        };
+        System.IO.File.WriteAllLines(script, lines);
+
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c \"" + script + "\"")
+        {
+            CreateNoWindow = true,
+            UseShellExecute = false,
+        });
+        return true;
+    }
+
     public static bool IsTrustedDownload(Uri uri) =>
         uri.Scheme == Uri.UriSchemeHttps &&
         (uri.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase) ||

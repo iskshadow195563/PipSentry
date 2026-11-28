@@ -64,6 +64,35 @@ public partial class App : Application
             return;
         }
 
+        // Headless update apply: PipSentry.exe --applylatest
+        if (e.Args.Contains("--applylatest"))
+        {
+            try
+            {
+                var release = UpdateService.CheckAsync().GetAwaiter().GetResult();
+                var asset = release?.Portable ?? release?.Msi;
+                if (release is not null && asset is not null && UpdateService.IsNewer(UpdateService.CurrentVersion, release.Version))
+                {
+                    var folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PipSentry", "updates");
+                    var target = System.IO.Path.Combine(folder, asset.Name);
+                    UpdateService.DownloadAsync(asset, target, null).GetAwaiter().GetResult();
+                    AppLog.Write($"applylatest: {release.Version} -> {target}");
+                    UpdateService.LaunchInstaller(target, asset.Name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    AppLog.Write("applylatest: nothing newer");
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Write("applylatest failed: " + ex.Message);
+            }
+
+            Shutdown();
+            return;
+        }
+
         // Release check: PipSentry.exe --checkupdate
         if (e.Args.Contains("--checkupdate"))
         {

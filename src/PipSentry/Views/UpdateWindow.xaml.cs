@@ -100,7 +100,8 @@ public partial class UpdateWindow : Window
 
             StatusText.Text = L.Get("UpdateReady");
             Progress.Value = 100;
-            Install(target, asset.Name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
+            UpdateService.LaunchInstaller(target, asset.Name.EndsWith(".msi", StringComparison.OrdinalIgnoreCase));
+            Application.Current.Shutdown();
         }
         catch (Exception ex)
         {
@@ -124,47 +125,5 @@ public partial class UpdateWindow : Window
     {
         var path = Environment.ProcessPath ?? string.Empty;
         return path.Contains(@"\Program Files", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void Install(string file, bool isMsi)
-    {
-        if (isMsi)
-        {
-            Process.Start(new ProcessStartInfo("msiexec.exe", "/i \"" + file + "\"") { UseShellExecute = true });
-            Application.Current.Shutdown();
-            return;
-        }
-
-        var target = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(target))
-        {
-            Application.Current.Shutdown();
-            return;
-        }
-
-        var script = Path.Combine(Path.GetTempPath(), "PipSentry-update.cmd");
-        var pid = Environment.ProcessId;
-        var lines = new[]
-        {
-            "@echo off",
-            ":wait",
-            "tasklist /FI \"PID eq " + pid + "\" 2>nul | find \"" + pid + "\" >nul",
-            "if not errorlevel 1 (",
-            "  timeout /t 1 /nobreak >nul",
-            "  goto wait",
-            ")",
-            "copy /Y \"" + file + "\" \"" + target + "\" >nul",
-            "start \"\" \"" + target + "\"",
-            "del \"%~f0\"",
-        };
-        File.WriteAllLines(script, lines);
-
-        Process.Start(new ProcessStartInfo("cmd.exe", "/c \"" + script + "\"")
-        {
-            CreateNoWindow = true,
-            UseShellExecute = false,
-        });
-
-        Application.Current.Shutdown();
     }
 }

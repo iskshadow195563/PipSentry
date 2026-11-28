@@ -4,6 +4,14 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.6.1 - 2026-11-28
+
+Changed
+- The installer hand-off lives in `UpdateService.LaunchInstaller`, shared by the dialog and the dev switch.
+
+Internal
+- `--applylatest`: check, download and apply an update without the dialog (used to verify the portable replace-and-restart path end to end).
+
 ## 1.6.0 - 2026-11-28
 
 Added
