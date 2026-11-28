@@ -40,9 +40,10 @@ jobs:
         shell: pwsh
         run: |
           $wix = Join-Path $env:GITHUB_WORKSPACE ".tools/wix/wix.exe"
-          dotnet tool install --tool-path .tools/wix wix --version "5.*"
+          dotnet tool install --tool-path .tools/wix wix --version "5.0.2"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $wix extension add "WixToolset.UI.wixext/5.0.2"
+          # -g installs into %USERPROFILE%\.wix; without it the add is a no-op.
+          & $wix extension add -g "WixToolset.UI.wixext/5.0.2"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build MSI
