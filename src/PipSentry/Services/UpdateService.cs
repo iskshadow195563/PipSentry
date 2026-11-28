@@ -16,7 +16,8 @@ public sealed record ReleaseInfo(
     string Notes,
     string PageUrl,
     ReleaseAsset? Msi,
-    ReleaseAsset? Portable);
+    ReleaseAsset? Portable,
+    DateTime? PublishedAt = null);
 
 public static class UpdateService
 {
@@ -65,8 +66,36 @@ public static class UpdateService
 
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
-        var root = document.RootElement;
+        return ParseRelease(document.RootElement);
+    }
 
+    /// <summary>Newest first. Drafts and prereleases are skipped.</summary>
+    public static async Task<System.Collections.Generic.List<ReleaseInfo>> GetReleasesAsync(int count = 15,
+        CancellationToken cancellationToken = default)
+    {
+        var releases = new System.Collections.Generic.List<ReleaseInfo>();
+        var url = "https://api.github.com/repos/iskshadow195563/PipSentry/releases?per_page=" + Math.Clamp(count, 1, 50);
+
+        using var response = await Client.GetAsync(url, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode) return releases;
+
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (document.RootElement.ValueKind != JsonValueKind.Array) return releases;
+
+        foreach (var element in document.RootElement.EnumerateArray())
+        {
+            var release = ParseRelease(element);
+            if (release is not null) releases.Add(release);
+        }
+
+        releases.Sort((a, b) => b.Version.CompareTo(a.Version));
+        return releases;
+    }
+
+    private static ReleaseInfo? ParseRelease(JsonElement root)
+    {
+        if (root.ValueKind != JsonValueKind.Object) return null;
         if (root.TryGetProperty("draft", out var draft) && draft.GetBoolean()) return null;
         if (root.TryGetProperty("prerelease", out var pre) && pre.GetBoolean()) return null;
 
@@ -76,6 +105,14 @@ public static class UpdateService
         var title = root.TryGetProperty("name", out var nameElement) ? nameElement.GetString() ?? tag : tag;
         var notes = root.TryGetProperty("body", out var bodyElement) ? bodyElement.GetString() ?? string.Empty : string.Empty;
         var page = root.TryGetProperty("html_url", out var urlElement) ? urlElement.GetString() ?? string.Empty : string.Empty;
+
+        DateTime? published = null;
+        if (root.TryGetProperty("published_at", out var publishedElement) &&
+            publishedElement.GetString() is { Length: > 0 } publishedText &&
+            DateTime.TryParse(publishedText, null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsed))
+        {
+            published = parsed;
+        }
 
         ReleaseAsset? msi = null;
         ReleaseAsset? portable = null;
@@ -93,7 +130,7 @@ public static class UpdateService
             }
         }
 
-        return new ReleaseInfo(version, tag, title, notes, page, msi, portable);
+        return new ReleaseInfo(version, tag, title, notes, page, msi, portable, published);
     }
 
     public static async Task<string> DownloadAsync(ReleaseAsset asset, string targetPath, IProgress<double>? progress,

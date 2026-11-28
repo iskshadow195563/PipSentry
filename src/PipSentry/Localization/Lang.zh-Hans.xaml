@@ -179,4 +179,15 @@
   <sys:String x:Key="UpdateSkipped">已略过此版本</sys:String>
   <sys:String x:Key="UpdateNoAsset">这个版本没有可用的下载文件</sys:String>
 
+  <sys:String x:Key="SettingsTitle">设置</sys:String>
+  <sys:String x:Key="SettingsCurrentVersion">当前版本 {0}</sys:String>
+  <sys:String x:Key="SettingsAutoCheck">启动时检查更新（只提示）</sys:String>
+  <sys:String x:Key="SettingsCheckNow">刷新版本</sys:String>
+  <sys:String x:Key="SettingsVersions">版本列表</sys:String>
+  <sys:String x:Key="SettingsCurrentBadge">当前</sys:String>
+  <sys:String x:Key="SettingsLatestBadge">最新</sys:String>
+  <sys:String x:Key="SettingsNoReleases">读不到版本列表（离线或 API 限制）</sys:String>
+
+  <sys:String x:Key="SettingsDowngrade">下载并安装（降级）</sys:String>
+
 </ResourceDictionary>

@@ -56,6 +56,14 @@ A game switched to the background while idle is often throttled or stops updatin
 - Disable windowed game optimizations: write `SwapEffectUpgradeEnable=0` for the target exe. Restart the game after the change.
 - Force the target to redraw: send `RedrawWindow` once per second. Useful for older windows.
 
+## Updates and versions
+
+The gear in the header (or 設定 in the tray) opens the settings window: current version, a notify-only startup check, the release list and its notes.
+
+- Startup shows one toast when a newer release exists. Nothing is downloaded or installed on its own.
+- Pick any release in the list, including older ones, then press download and install. The button says downgrade when the selection is older.
+- The portable build replaces its exe and restarts; the installed build hands the MSI to msiexec (UAC prompt).
+
 ## Performance
 
 Test machine: Windows 11 x64, 3840×2160 (150% scale), 32 threads. Every number comes from the built-in `--bench` (10 seconds per scenario). Each value is the stable one of three runs.

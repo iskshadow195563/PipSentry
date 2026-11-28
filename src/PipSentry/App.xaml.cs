@@ -214,12 +214,7 @@ public partial class App : Application
         Tray.ShowMonitorRequested += ToggleMonitorVisibility;
         Tray.PauseToggleRequested += () => Monitor?.TogglePause();
         Tray.AutostartToggled += enabled => AutostartService.SetEnabled(enabled);
-        Tray.CheckUpdatesRequested += () => _ = CheckForUpdatesAsync(true);
-        Tray.AutoUpdateToggled += enabled =>
-        {
-            Settings.AutoCheckUpdates = enabled;
-            SettingsStore.Save(Settings);
-        };
+        Tray.CheckUpdatesRequested += ShowSettingsWindow;
         Tray.ExitRequested += ShutdownApp;
 
         var lastCheck = Settings.LastUpdateCheckUtc;
@@ -319,9 +314,19 @@ public partial class App : Application
         ShowShell();
     }
 
-    public static void ShowUpdateWindow(ReleaseInfo release)
+    public static void ShowSettingsWindow()
     {
-        var window = new UpdateWindow(release);
+        foreach (Window open in Current.Windows)
+        {
+            if (open is SettingsWindow existing)
+            {
+                existing.Show();
+                existing.Activate();
+                return;
+            }
+        }
+
+        var window = new SettingsWindow { Owner = Shell is { IsVisible: true } ? Shell : null };
         window.Show();
         window.Activate();
     }
@@ -346,15 +351,19 @@ public partial class App : Application
                 return;
             }
 
-            if (!manual && Settings.SkippedUpdate == release.Tag) return;
-
-            ShowUpdateWindow(release);
-            if (!manual)
+            if (manual)
             {
-                Toast(L.Format("UpdateAvailable",
-                    UpdateService.Normalize(UpdateService.CurrentVersion).ToString(3),
-                    release.Version.ToString(3)));
+                ShowSettingsWindow();
+                return;
             }
+
+            // Never open a window on its own: notify once per version, the user decides.
+            if (Settings.LastNotifiedUpdate == release.Tag) return;
+            Settings.LastNotifiedUpdate = release.Tag;
+            SettingsStore.Save(Settings);
+            Toast(L.Format("UpdateAvailable",
+                UpdateService.Normalize(UpdateService.CurrentVersion).ToString(3),
+                release.Version.ToString(3)));
         }
         catch (Exception ex)
         {
@@ -640,15 +649,12 @@ public partial class App : Application
         Window window = windowKind?.ToLowerInvariant() switch
         {
             "hotkeys" => new HotkeyWindow(),
-            "update" => new UpdateWindow(new ReleaseInfo(new Version(9, 9, 9), "v9.9.9", "PipSentry 9.9.9",
-                "新增\n- 範例項目一\n- 範例項目二\n\n修正\n- 範例修正",
-                "https://github.com/iskshadow195563/PipSentry/releases",
-                new ReleaseAsset("PipSentry-9.9.9-x64.msi", "https://github.com/x.msi", 1024),
-                new ReleaseAsset("PipSentry-9.9.9-portable.exe", "https://github.com/x.exe", 1024))),
+            "settings" => new SettingsWindow(),
             _ => new ShellWindow(),
         };
-        window.Width = windowKind?.ToLowerInvariant() switch { "hotkeys" => 560, "update" => 620, _ => 1148 };
-        window.Height = windowKind?.ToLowerInvariant() switch { "hotkeys" => 430, "update" => 470, _ => 866 };
+        if (window is SettingsWindow sample) sample.SeedSample();
+        window.Width = windowKind?.ToLowerInvariant() switch { "hotkeys" => 560, "settings" => 660, _ => 1148 };
+        window.Height = windowKind?.ToLowerInvariant() switch { "hotkeys" => 430, "settings" => 620, _ => 866 };
 
         var content = (FrameworkElement)window.Content;
         content.Measure(new Size(window.Width, window.Height));

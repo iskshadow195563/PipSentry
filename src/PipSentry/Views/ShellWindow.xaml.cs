@@ -465,6 +465,8 @@ public partial class ShellWindow : Window
 
     private void OnToggleTheme(object sender, RoutedEventArgs e) => App.ToggleTheme();
 
+    private void OnSettingsClick(object sender, RoutedEventArgs e) => App.ShowSettingsWindow();
+
     private void OnHotkeysClick(object sender, RoutedEventArgs e)
     {
         var window = new HotkeyWindow { Owner = this };

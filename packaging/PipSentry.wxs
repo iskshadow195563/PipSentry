@@ -4,7 +4,7 @@
 
   <Package Name="PipSentry"
            Manufacturer="PipSentry Studio"
-           Version="1.6.2.0"
+           Version="1.7.0.0"
            UpgradeCode="7E1B5C0A-3C41-4C39-9F3D-2A9E0B5D6C71"
            Scope="perMachine"
            Language="1028"
@@ -13,7 +13,8 @@
            Compressed="yes">
 
     <SummaryInformation Description="PipSentry 懸浮視窗監控" Manufacturer="PipSentry Studio" />
-    <MajorUpgrade DowngradeErrorMessage="已偵測到較新版本的 PipSentry，安裝程式將結束。" />
+    <!-- The settings window lets the user install any release, including older ones. -->
+    <MajorUpgrade AllowDowngrades="yes" />
     <MediaTemplate EmbedCab="yes" />
 
     <Icon Id="AppIcon" SourceFile="..\src\PipSentry\Assets\app.ico" />

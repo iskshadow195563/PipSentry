@@ -34,6 +34,7 @@ public sealed class AppSettings
     public bool AutoCheckUpdates { get; set; } = true;
     public System.DateTime? LastUpdateCheckUtc { get; set; }
     public string SkippedUpdate { get; set; } = string.Empty;
+    public string LastNotifiedUpdate { get; set; } = string.Empty;
 
     public string HotkeyToggle { get; set; } = "Ctrl+Alt+M";
     public string HotkeyPause { get; set; } = "Ctrl+Alt+P";

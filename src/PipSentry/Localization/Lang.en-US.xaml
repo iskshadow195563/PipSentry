@@ -179,4 +179,15 @@
   <sys:String x:Key="UpdateSkipped">This version is skipped</sys:String>
   <sys:String x:Key="UpdateNoAsset">No downloadable file in this release</sys:String>
 
+  <sys:String x:Key="SettingsTitle">Settings</sys:String>
+  <sys:String x:Key="SettingsCurrentVersion">Current version {0}</sys:String>
+  <sys:String x:Key="SettingsAutoCheck">Check at startup (notify only)</sys:String>
+  <sys:String x:Key="SettingsCheckNow">Refresh versions</sys:String>
+  <sys:String x:Key="SettingsVersions">Versions</sys:String>
+  <sys:String x:Key="SettingsCurrentBadge">current</sys:String>
+  <sys:String x:Key="SettingsLatestBadge">latest</sys:String>
+  <sys:String x:Key="SettingsNoReleases">No release list (offline or API limit)</sys:String>
+
+  <sys:String x:Key="SettingsDowngrade">Download and install (downgrade)</sys:String>
+
 </ResourceDictionary>

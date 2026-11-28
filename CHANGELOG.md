@@ -4,6 +4,21 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.7.0 - 2026-11-28
+
+Added
+- Settings window (gear in the header, or 設定 in the tray): current version, the notify-only startup check toggle, refresh, and a list of recent releases with their notes.
+- Any release in the list can be installed, including older ones; the button says "downgrade" when the selection is older than the running version.
+- The MSI now allows downgrades so the version picker can move backwards.
+
+Changed
+- The startup check no longer opens a window. It shows one toast per new version and leaves the decision to the user.
+- The tray update entries collapse into a single 設定 entry.
+- `--render --window settings` replaces `--window update`.
+
+Removed
+- The old update dialog (`UpdateWindow`).
+
 ## 1.6.2 - 2026-11-28
 
 Fixed
