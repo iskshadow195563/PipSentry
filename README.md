@@ -118,7 +118,7 @@ PipSentry.exe --grab out.png --scale 560x315 --region 1200,600,960,540
 dotnet test tests/PipSentry.Tests/PipSentry.Tests.csproj -c Release
 ```
 
-CI 定義在 `ci/build.yml`（內容與 `.github/workflows/build.yml` 相同）。目前放在 `ci/` 是因為推送 workflow 檔需要 token 具備 `workflow` 權限；執行 `gh auth refresh -h github.com -s workflow` 後把它移回 `.github/workflows/` 即可自動化。
+CI 在 `.github/workflows/build.yml`：push 到 main 時建置、跑測試、產出免安裝 exe 與 MSI。
 
 ## 授權
 
