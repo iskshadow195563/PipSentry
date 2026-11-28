@@ -4,6 +4,14 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.5.0 - 2026-11-28
+
+Added
+- Authenticode signing pipeline: `sign.ps1` (store thumbprint, subject or PFX, SHA-256, timestamp, verification), `build.ps1 -Sign` and an optional CI step driven by `SIGNING_PFX_BASE64` / `SIGNING_PFX_PASSWORD` secrets.
+- `tools/new-signing-cert.ps1` and `tools/trust-signing-cert.ps1` for local self-signed builds.
+- `docs/SIGNING.md` and a README section explaining the "unknown publisher" prompt and the certificate options.
+- The build script now reads the version from the csproj, so the MSI name cannot drift.
+
 ## 1.4.2 - 2026-11-28
 
 Fixed

@@ -106,6 +106,14 @@ PipSentry.exe --bench report.txt --fps 60 --paused
 PipSentry.exe --grab out.png --scale 560x315 --region 1200,600,960,540
 ```
 
+## 發行簽章
+
+未簽章的 exe／MSI 會讓 Windows 顯示「不明的發行者」，因為檔案沒有受信任 CA 的 Authenticode 簽章，這跟專案名稱無關。
+
+本專案已備好簽章流程（`sign.ps1`、`build.ps1 -Sign`、CI 的選用 secret），但憑證要自己取得：Azure Trusted Signing（約 US$9.99/月）、OV／EV 憑證，或開源專案可申請 SignPath Foundation。自簽憑證只對自己或已信任該憑證的機器有效。
+
+完整做法與費用比較見 [docs/SIGNING.md](docs/SIGNING.md)。
+
 ## 建置
 
 ```powershell

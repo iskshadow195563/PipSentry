@@ -23,38 +23,31 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # There is no solution file: every step names its project explicitly.
-      - name: Restore
+      - name: Restore tests
         run: dotnet restore "tests/PipSentry.Tests/PipSentry.Tests.csproj"
 
-      - name: Build
+      - name: Build tests
         run: dotnet build "tests/PipSentry.Tests/PipSentry.Tests.csproj" -c Release --no-restore
 
       - name: Test
         run: dotnet test "tests/PipSentry.Tests/PipSentry.Tests.csproj" -c Release --no-build
 
-      - name: Publish single-file portable executable
-        run: dotnet publish "src/PipSentry/PipSentry.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false -o "dist/PipSentry-portable"
-
-      - name: Install WiX toolset and UI extension
+      - name: Build portable exe and MSI
         shell: pwsh
-        run: |
-          $wix = Join-Path $env:GITHUB_WORKSPACE ".tools/wix/wix.exe"
-          dotnet tool install --tool-path .tools/wix wix --version "5.0.2"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          # -g installs into %USERPROFILE%\.wix; without it the add is a no-op.
-          & $wix extension add -g "WixToolset.UI.wixext/5.0.2"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        run: ./build.ps1 -Dotnet dotnet
 
-      - name: Build MSI
+      # Optional: set SIGNING_PFX_BASE64 (base64 of the .pfx) and
+      # SIGNING_PFX_PASSWORD as repository secrets to sign both artifacts.
+      - name: Sign artifacts
         shell: pwsh
-        working-directory: packaging
+        env:
+          SIGNING_PFX_BASE64: ${{ secrets.SIGNING_PFX_BASE64 }}
+          SIGNING_PFX_PASSWORD: ${{ secrets.SIGNING_PFX_PASSWORD }}
         run: |
-          # PipSentry.wxs resolves ..\src and ..\dist relative to this folder, like build.ps1.
-          $wix = Join-Path $env:GITHUB_WORKSPACE ".tools/wix/wix.exe"
-          $msi = Join-Path $env:GITHUB_WORKSPACE "dist/PipSentry.msi"
-          & $wix build -arch x64 -ext "WixToolset.UI.wixext/5.0.2" "PipSentry.wxs" -o $msi
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not $env:SIGNING_PFX_BASE64) { Write-Host "No SIGNING_PFX_BASE64 secret; artifacts stay unsigned."; exit 0 }
+          $pfx = Join-Path $env:RUNNER_TEMP "signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGNING_PFX_BASE64))
+          ./sign.ps1 -PfxPath $pfx -PfxPassword $env:SIGNING_PFX_PASSWORD
 
       - name: Upload portable executable
         uses: actions/upload-artifact@v4
@@ -67,5 +60,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PipSentry-msi
-          path: dist/PipSentry.msi
+          path: dist/PipSentry-*-x64.msi
           if-no-files-found: error

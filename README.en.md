@@ -106,6 +106,14 @@ PipSentry.exe --bench report.txt --fps 60 --paused
 PipSentry.exe --grab out.png --scale 560x315 --region 1200,600,960,540
 ```
 
+## Code signing
+
+Unsigned exe and MSI files make Windows show an unknown publisher. That comes from the missing Authenticode signature from a trusted CA, not from the project name.
+
+The repository ships the signing path (`sign.ps1`, `build.ps1 -Sign`, optional CI secrets), but the certificate is on you: Azure Trusted Signing (about US$9.99/month), an OV or EV certificate, or SignPath Foundation for open source. A self-signed certificate only helps on machines that trust it.
+
+See [docs/SIGNING.md](docs/SIGNING.md) for the steps and the cost comparison.
+
 ## Build
 
 ```powershell
