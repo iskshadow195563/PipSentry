@@ -2,7 +2,7 @@
 
 | 檔案 | 用途 |
 | --- | --- |
-| `PipSentry-promo-1080p.mp4` | 正片，43.9 秒，1920×1080 / 30fps |
+| `PipSentry-promo-1080p.mp4` | 正片，46.3 秒，1920×1080 / 30fps |
 | `assets/cover.png` | B 站封面 1146×717 |
 | `script.md` | 分鏡、口播稿、15 秒短版腳本 |
 | `upload.md` | 標題、簡介、標籤、分區、置頂評論 |
@@ -50,11 +50,12 @@ powershell -File promo/build-final.ps1
 | 轉場用速度／擦除 | ✅ xfade wipeleft 0.35s |
 | 沒有無意義的全屏色閃 | ✅ |
 | contact sheet 看得出推進 | ✅ 痛點→操作→能力→數字→更新→CTA |
-| 音訊 | 生成式低頻 pad＋6 個 whoosh，無版權素材 |
+| 音訊 | 自製 100 BPM 曲（pad／bass／kick／clap／hat／arp／lead）＋低頻撞擊與柔化 whoosh，−14.8 LUFS |
 | 字幕 | 未燒進畫面，另附 SRT 供 B 站 CC |
 
 ## 已知限制
 
 - 沒有真人旁白；口播稿在 `script.md`，想配音可以直接照唸。
 - 監控畫面用的是遊戲啟動器視窗（實機抓取），不是遊戲內畫面；要換成真實遊玩畫面，用 `--grab` 抽一張替換 `assets/monitor.png` 後重跑 `scene3.ps1`。
-- 音樂是合成的，情緒偏冷；要更熱血可換 B 站曲庫，記得調音量。
+- 音樂是 numpy 合成的，情緒偏冷；`assets/music.py` 可改 BPM／和弦／段落，或直接換成 B 站曲庫。
+- 動態是「用截圖做運動」（推鏡、縮放、游標、漣漪、選取框），不是實機錄影；要實錄可照 `script.md` 的鏡頭表用 OBS 補拍。

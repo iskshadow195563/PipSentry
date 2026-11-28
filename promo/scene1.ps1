@@ -13,6 +13,6 @@ $fx = "[0:v]scale=1920:1080,setsar=1[bg];" +
       "[4:v]format=rgba,fade=t=in:st=4.50:d=0.12:alpha=1[w3];" +
       "[v3][w3]overlay=(W-w)/2:735:enable='between(t,4.50,6.0)'[vout]"
 
-& ffmpeg -hide_banner -loglevel error -y -loop 1 -t 6 -i (Join-Path $a "bg.png") -framerate 12 -i (Join-Path $a "type_%02d.png") -loop 1 -t 6 -i (Join-Path $a "w1.png") -loop 1 -t 6 -i (Join-Path $a "w2.png") -loop 1 -t 6 -i (Join-Path $a "w3.png") -filter_complex $fx -map "[vout]" -r 30 -t 6 -c:v libx264 -crf 18 -preset veryfast -pix_fmt yuv420p (Join-Path $out "s1.mp4")
+& ffmpeg -hide_banner -loglevel error -y -loop 1 -t 6 -i (Join-Path $a "bg.png") -framerate 8 -i (Join-Path $a "type_%02d.png") -loop 1 -t 6 -i (Join-Path $a "w1.png") -loop 1 -t 6 -i (Join-Path $a "w2.png") -loop 1 -t 6 -i (Join-Path $a "w3.png") -filter_complex $fx -map "[vout]" -r 30 -t 6 -c:v libx264 -crf 18 -preset veryfast -pix_fmt yuv420p (Join-Path $out "s1.mp4")
 if ($LASTEXITCODE -ne 0) { throw "s1 failed" }
 "s1 ok"

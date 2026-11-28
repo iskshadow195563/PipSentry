@@ -126,6 +126,7 @@ $end.G.DrawString("github.com/iskshadow195563/PipSentry", $fm, $muted2, [System.
 Save $end "endcard.png"
 
 # typing frames for scene 1
+Remove-Item (Join-Path $assets "type_*.png") -Force -ErrorAction SilentlyContinue
 $text = "挂机的时候，你不用一直切回去"
 $bg2 = [System.Drawing.Image]::FromFile((Join-Path $assets "bg.png"))
 $frameFont = Font 74 $true

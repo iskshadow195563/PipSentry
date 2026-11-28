@@ -19,6 +19,10 @@ packaging/.wix/
 .release-notes*.md
 .release/
 
+# Promo working files (regenerate with promo/music.py)
+promo/assets/music.wav
+promo/out/
+
 # Logs
 *.log
 
