@@ -1,5 +1,7 @@
 # PipSentry
 
+[![build](https://github.com/iskshadow195563/PipSentry/actions/workflows/build.yml/badge.svg)](https://github.com/iskshadow195563/PipSentry/actions/workflows/build.yml)
+
 Windows 視窗監控小工具。把某個視窗（或螢幕）的一塊畫面釘在最上層，掛機時不用切回去看進度。
 
 ![深色](docs/screenshot-dark-en.png)

@@ -1,5 +1,7 @@
 # PipSentry
 
+[![build](https://github.com/iskshadow195563/PipSentry/actions/workflows/build.yml/badge.svg)](https://github.com/iskshadow195563/PipSentry/actions/workflows/build.yml)
+
 A small window monitor for Windows. It pins one part of a window (or screen) on top, so you do not have to switch back to check progress.
 
 ![Dark theme](docs/screenshot-dark-en.png)
