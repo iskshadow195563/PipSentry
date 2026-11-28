@@ -450,9 +450,11 @@
                 <TextBlock Text="{DynamicResource Opacity}" Style="{StaticResource Body}" VerticalAlignment="Center" />
                 <Slider x:Name="OpacitySlider" Grid.Column="1" Minimum="0.25" Maximum="1" Value="1"
                         Margin="0,0,12,0" VerticalAlignment="Center" IsSnapToTickEnabled="True"
-                        TickFrequency="0.05" ValueChanged="OnOpacityChanged" />
+                        TickFrequency="0.05" IsMoveToPointEnabled="True"
+                        SmallChange="0.01" LargeChange="0.05"
+                        ValueChanged="OnOpacityChanged" />
                 <TextBlock x:Name="OpacityText" Grid.Column="2" Text="100%" Style="{StaticResource Caption}"
-                           VerticalAlignment="Center" MinWidth="40" TextAlignment="Right" />
+                           Width="44" VerticalAlignment="Center" TextAlignment="Right" />
               </Grid>
             </StackPanel>
           </ScrollViewer>

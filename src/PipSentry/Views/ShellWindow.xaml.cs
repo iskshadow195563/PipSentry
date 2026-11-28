@@ -26,6 +26,10 @@ public partial class ShellWindow : Window
     private bool _suppressUiEvents;
     private bool _applyingProfile;
     private int _profileCursor = -1;
+    private readonly System.Windows.Threading.DispatcherTimer _opacitySave = new()
+    {
+        Interval = TimeSpan.FromMilliseconds(450),
+    };
 
     public ShellWindow()
     {
@@ -56,6 +60,13 @@ public partial class ShellWindow : Window
         SizeChanged += (_, _) => UpdatePreviewOutputSize();
         IsVisibleChanged += OnShellVisibilityChanged;
         StateChanged += OnShellStateChanged;
+        _opacitySave.Tick += (_, _) =>
+        {
+            _opacitySave.Stop();
+            if (_suppressUiEvents) return;
+            App.Settings.MonitorOpacity = Math.Round(OpacitySlider.Value, 2);
+            SettingsStore.Save(App.Settings);
+        };
     }
 
     private void OnShellVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -401,6 +412,10 @@ public partial class ShellWindow : Window
     private void OnOpacityChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (OpacityText is not null) OpacityText.Text = $"{e.NewValue * 100:0}%";
+        // Live preview while the slider moves; the value is persisted once it settles.
+        App.Monitor?.SetOpacity(e.NewValue);
+        _opacitySave.Stop();
+        _opacitySave.Start();
     }
 
     // ---------------------------------------------------------------- actions

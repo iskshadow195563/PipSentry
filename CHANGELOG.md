@@ -4,6 +4,15 @@ All notable changes to PipSentry are documented in this file.
 
 The format is based on Keep a Changelog, and the project uses Semantic Versioning. Releases are listed newest first.
 
+## 1.6.2 - 2026-11-28
+
+Fixed
+- The opacity slider used the default track repeat buttons: a click started a repeat that raced to the ends, so the thumb jumped between the minimum and 100% and only the thumb itself was draggable. Clicking the track now moves the thumb to that point (`IsMoveToPointEnabled`, 5% snapping).
+- The percentage label had a variable width, so the track shifted while dragging. It now has a fixed width.
+
+Changed
+- Opacity is applied to the overlay live while dragging, and saved 450 ms after the last change instead of only on explicit actions.
+
 ## 1.6.1 - 2026-11-28
 
 Changed

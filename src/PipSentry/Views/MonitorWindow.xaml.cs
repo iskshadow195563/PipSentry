@@ -518,6 +518,11 @@ public partial class MonitorWindow : Window
         SnapToCorner("C");
     }
 
+    public void SetOpacity(double value)
+    {
+        Opacity = Math.Clamp(value, 0.25, 1);
+    }
+
     public void ToggleStopWhenHidden()
     {
         App.Settings.StopWhenHidden = !App.Settings.StopWhenHidden;
